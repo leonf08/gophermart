@@ -26,7 +26,7 @@ type (
 		ProcessedAt time.Time `json:"processed_at,omitempty"`
 	}
 
-	OrderStatusResponse struct {
+	AccrualResponse struct {
 		OrderNumber string `json:"order"`
 		Status      string `json:"status"`
 		Accrual     int64  `json:"accrual,omitempty"`

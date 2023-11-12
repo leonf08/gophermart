@@ -1,34 +1,18 @@
-package usermanager
+package users
 
 import (
 	"context"
-	"fmt"
 	"github.com/leonf08/gophermart.git/internal/models"
-	errs "github.com/leonf08/gophermart.git/internal/services"
+	"github.com/leonf08/gophermart.git/internal/services"
 	"github.com/leonf08/gophermart.git/internal/services/utils"
 )
 
-// UserRepo is an interface for working with the user repository.
-type UserRepo interface {
-	CreateUser(ctx context.Context, login, hashedPasswd string) error
-	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
-	GetUserAccount(ctx context.Context, userId int64) (*models.UserAccount, error)
-	DoWithdrawal(ctx context.Context, withdrawal models.Withdrawal) error
-	UpdateUserAccount(ctx context.Context, userAccount *models.UserAccount) error
-}
-
-type Authenticator interface {
-	GenerateHashFromPassword(user *models.User) (string, error)
-	CheckPasswordHash(user, storedUser *models.User) error
-	GenerateToken(user *models.User) (string, error)
-}
-
 type UserManager struct {
-	repo UserRepo
-	auth Authenticator
+	repo services.UserRepo
+	auth services.Authenticator
 }
 
-func NewUserManager(repo UserRepo, auth Authenticator) *UserManager {
+func NewUserManager(repo services.UserRepo, auth services.Authenticator) *UserManager {
 	return &UserManager{
 		repo: repo,
 		auth: auth,
@@ -43,7 +27,7 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 	// Check if the user already exists.
 	_, err := u.repo.GetUserByLogin(ctx, user.Login)
 	if err == nil {
-		return errs.ErrUserAlreadyExists
+		return services.ErrUserAlreadyExists
 	}
 
 	// Generate hash from password.
@@ -55,7 +39,7 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 	// Create user.
 	err = u.repo.CreateUser(ctx, user.Login, hashedPasswd)
 	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		return err
 	}
 
 	return nil
@@ -115,12 +99,12 @@ func (u *UserManager) GetUserAccount(ctx context.Context, userId int64) (*models
 func (u *UserManager) WithdrawFromAccount(ctx context.Context, w models.Withdrawal) error {
 	// Check if the orderNumber is valid.
 	if !utils.IsNumberValid(w.OrderNumber) {
-		return errs.ErrInvalidOrderNumberFormat
+		return services.ErrInvalidOrderNumberFormat
 	}
 
 	// Check if the orderNumber is valid by luhn algorithm.
 	if !utils.LuhnValidate(w.OrderNumber) {
-		return errs.ErrInvalidOrderNumber
+		return services.ErrInvalidOrderNumber
 	}
 
 	// Get user account.
@@ -131,7 +115,7 @@ func (u *UserManager) WithdrawFromAccount(ctx context.Context, w models.Withdraw
 
 	// Check if the sum is greater than the current balance.
 	if userAccount.Current < w.Sum {
-		return errs.ErrInsufficientFunds
+		return services.ErrInsufficientFunds
 	}
 
 	// Withdraw from account.

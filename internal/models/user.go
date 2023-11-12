@@ -10,10 +10,9 @@ type (
 	}
 
 	UserAccount struct {
-		UserID    int64   `json:"-"`
-		Current   int64   `json:"current"`
-		Withdrawn int64   `json:"withdrawn"`
-		Orders    []Order `json:"-"`
+		UserID    int64 `json:"-"`
+		Current   int64 `json:"current"`
+		Withdrawn int64 `json:"withdrawn"`
 	}
 
 	CustomJWTClaims struct {
