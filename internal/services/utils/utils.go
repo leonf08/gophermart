@@ -1,6 +1,6 @@
 package utils
 
-func IsNumberValid(s string) bool {
+func IsNumber(s string) bool {
 	for _, r := range s {
 		if r < '0' || r > '9' {
 			return false

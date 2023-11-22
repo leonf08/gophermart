@@ -5,9 +5,10 @@ import (
 )
 
 var (
-	ErrInvalidOrderNumberFormat = errors.New("invalid order number format")
-	ErrInvalidOrderNumber       = errors.New("invalid order number")
-	ErrOrderAlreadyExists       = errors.New("order already exists")
+	ErrInvalidOrderNumberFormat  = errors.New("invalid order number format")
+	ErrInvalidOrderNumber        = errors.New("invalid order number")
+	ErrOrderAlreadyExists        = errors.New("order already exists")
+	ErrOrderAlreadyExistsForUser = errors.New("order already exists for this user")
 
 	ErrInvalidToken             = errors.New("invalid token")
 	ErrGenerateToken            = errors.New("failed to generate token")

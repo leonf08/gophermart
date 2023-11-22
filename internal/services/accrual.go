@@ -1,27 +1,26 @@
-package accrual
+package services
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/leonf08/gophermart.git/internal/models"
-	"github.com/leonf08/gophermart.git/internal/services"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-// Accrual is a service for working with the accrual system.
-type Accrual struct {
+// AccrualService is a service for working with the accrual system.
+type AccrualService struct {
 	address   string
-	orderRepo services.OrderRepo
-	userRepo  services.UserRepo
+	orderRepo OrderRepo
+	userRepo  UserRepo
 	orderNum  chan string
 }
 
 // NewAccrual creates a new accrual service.
-func NewAccrual(orderRepo services.OrderRepo, userRepo services.UserRepo) *Accrual {
-	return &Accrual{
+func NewAccrual(orderRepo OrderRepo, userRepo UserRepo) *AccrualService {
+	return &AccrualService{
 		orderRepo: orderRepo,
 		userRepo:  userRepo,
 		orderNum:  make(chan string),
@@ -29,12 +28,12 @@ func NewAccrual(orderRepo services.OrderRepo, userRepo services.UserRepo) *Accru
 }
 
 // SendOrderAccrual sends an order number to the accrual system.
-func (a *Accrual) SendOrderAccrual(orderNum string) {
+func (a *AccrualService) SendOrderAccrual(orderNum string) {
 	a.orderNum <- orderNum
 }
 
 // Run starts the accrual service.
-func (a *Accrual) Run(ctx context.Context) error {
+func (a *AccrualService) Run(ctx context.Context) error {
 	orderNum := <-a.orderNum
 	url := fmt.Sprintf("%s/api/orders/%s", a.address, orderNum)
 	resp, err := http.Get(url)
@@ -100,7 +99,7 @@ func (a *Accrual) Run(ctx context.Context) error {
 		time.Sleep(time.Duration(pause) * time.Second)
 		a.SendOrderAccrual(orderNum)
 	case http.StatusInternalServerError:
-		return services.ErrAccrualInternalError
+		return ErrAccrualInternalError
 	}
 
 	return nil

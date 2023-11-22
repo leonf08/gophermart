@@ -1,21 +1,20 @@
-package orders
+package services
 
 import (
 	"context"
 	"github.com/leonf08/gophermart.git/internal/models"
-	"github.com/leonf08/gophermart.git/internal/services"
 	"github.com/leonf08/gophermart.git/internal/services/utils"
 	"time"
 )
 
 // OrderManager is a service for working with orders.
 type OrderManager struct {
-	repo    services.OrderRepo
-	accrual services.Accrual
+	repo    OrderRepo
+	accrual AccrualService
 }
 
 // NewOrderManager creates a new order manager.
-func NewOrderManager(repo services.OrderRepo, accrual services.Accrual) *OrderManager {
+func NewOrderManager(repo OrderRepo, accrual AccrualService) *OrderManager {
 	return &OrderManager{
 		repo:    repo,
 		accrual: accrual,
@@ -25,21 +24,24 @@ func NewOrderManager(repo services.OrderRepo, accrual services.Accrual) *OrderMa
 // CreateNewOrder creates a new order.
 // If the order creation fails, an error is returned.
 // If the order creation succeeds, nil is returned.
-func (o *OrderManager) CreateNewOrder(ctx context.Context, userId int64, orderNum string) error {
+func (o *OrderManager) CreateNewOrder(ctx context.Context, userId, orderNum string) error {
 	// Check if the order number is valid.
-	if !utils.IsNumberValid(orderNum) {
-		return services.ErrInvalidOrderNumberFormat
+	if !utils.IsNumber(orderNum) {
+		return ErrInvalidOrderNumber
 	}
 
 	// Check if the order number is valid by luhn algorithm.
 	if !utils.LuhnValidate(orderNum) {
-		return services.ErrInvalidOrderNumber
+		return ErrInvalidOrderNumberFormat
 	}
 
 	// Check if the order already exists.
-	_, err := o.repo.GetOrderByNumber(ctx, orderNum)
+	order, err := o.repo.GetOrderByNumber(ctx, orderNum)
 	if err == nil {
-		return services.ErrOrderAlreadyExists
+		if order.UserID == userId {
+			return ErrOrderAlreadyExistsForUser
+		}
+		return ErrOrderAlreadyExists
 	}
 
 	// Create order.
@@ -62,7 +64,7 @@ func (o *OrderManager) CreateNewOrder(ctx context.Context, userId int64, orderNu
 // GetOrdersForUser returns all orders for a given user.
 // If the order retrieval fails, an error is returned.
 // If the order retrieval succeeds, the orders are returned.
-func (o *OrderManager) GetOrdersForUser(ctx context.Context, userId int64) ([]*models.Order, error) {
+func (o *OrderManager) GetOrdersForUser(ctx context.Context, userId string) ([]*models.Order, error) {
 	// Retrieve orders.
 	orders, err := o.repo.GetOrderList(ctx, userId)
 	if err != nil {

@@ -5,25 +5,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/leonf08/gophermart.git/internal/controller/http/handlers/middleware"
+	"github.com/leonf08/gophermart.git/internal/services"
 	"log/slog"
 )
 
-func NewRouter(logger *slog.Logger) *chi.Mux {
+func NewRouter(users services.Users, orders services.Orders, auth services.Authenticator, log *slog.Logger) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(
 		chiMiddleware.Compress(flate.BestCompression),
 		chiMiddleware.RequestID,
-		middleware.Logging(logger),
+		middleware.Logging(log),
 	)
 
 	r.Route("/api/user/", func(r chi.Router) {
-		r.Post("/register/", userSignUp)
-		r.Post("/login/", userLogIn)
-		r.Post("/orders/", uploadOrder)
-		r.Get("/orders/", getOrders)
-		r.Get("/balance/", getUserBalance)
-		r.Post("/balance/withdraw/", withdraw)
-		r.Get("/withdrawals/", getWithdrawals)
+		newHandler(r, users, orders, auth, log)
 	})
 
 	return r
