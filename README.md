@@ -1,5 +1,5 @@
 [![Test and coverage](https://github.com/leonf08/gophermart/actions/workflows/test.yml/badge.svg)](https://github.com/leonf08/gophermart/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/leonf08/gophermart/branch/main/graph/badge.svg?token=ZQZQZQZQZQ)](https://codecov.io/gh/leonf08/gophermart)
+[![codecov](https://codecov.io/gh/leonf08/gophermart/graph/badge.svg?token=ZQZQZQZQZQ)](https://codecov.io/gh/leonf08/gophermart)
 
 # go-musthave-diploma-tpl
 
