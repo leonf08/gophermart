@@ -16,6 +16,7 @@ type (
 		DoWithdrawal(ctx context.Context, withdrawal *models.Withdrawal) error
 		UpdateUserAccount(ctx context.Context, userAccount *models.UserAccount) error
 		GetWithdrawalList(ctx context.Context, userId string) ([]*models.Withdrawal, error)
+		CreateUserAccount(ctx context.Context, userId string) error
 	}
 
 	// OrderRepo is an interface for working with the order repository.
@@ -24,6 +25,12 @@ type (
 		GetOrderByNumber(ctx context.Context, orderNum string) (*models.Order, error)
 		GetOrderList(ctx context.Context, userId string) ([]*models.Order, error)
 		UpdateOrder(ctx context.Context, order *models.Order) error
+	}
+
+	// AccrualRepo is an interface for working with the accrual repository.
+	AccrualRepo interface {
+		UserRepo
+		OrderRepo
 	}
 
 	// Authenticator is an interface for working with the authenticator service.

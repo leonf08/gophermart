@@ -60,7 +60,7 @@ func (a *AuthenticatorService) ValidateTokenAndExtractClaims(token string) (*mod
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}))
 
 	if err != nil {
-		return nil, ErrInvalidToken
+		return nil, err
 	}
 
 	return claims, nil

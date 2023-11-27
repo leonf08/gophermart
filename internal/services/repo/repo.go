@@ -71,6 +71,19 @@ func (r *Repository) DoWithdrawal(ctx context.Context, withdrawal *models.Withdr
 	return nil
 }
 
+// CreateUserAccount creates a new user account in database.
+// If user account creation fails, returns error.
+// If user account creation succeeds, returns nil.
+func (r *Repository) CreateUserAccount(ctx context.Context, userId string) error {
+	query := `INSERT INTO user_accounts (user_id) VALUES ($1)`
+	_, err := r.db.ExecContext(ctx, query, userId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateUserAccount updates a user account.
 // If update fails, returns error.
 // If update succeeds, returns nil.

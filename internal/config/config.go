@@ -6,11 +6,13 @@ import (
 	"os"
 )
 
+const key = "smAc+l7mbCyqh79FUhsn0O9rSbDOmxcTGqPKJuJJ7ow="
+
 type Config struct {
 	ServerAddress   string `env:"RUN_ADDRESS"`
 	DatabaseAddress string `env:"DATABASE_URI"`
 	AccrualAddress  string `env:"ACCRUAL_SYSTEM_ADDRESS"`
-	JWTSecret       string `toml:"jwt_secret" env:"JWT_SECRET" env-required:"true"`
+	JWTSecret       string `env:"JWT_SECRET"`
 }
 
 func MustLoadConfig() *Config {
@@ -24,10 +26,7 @@ func MustLoadConfig() *Config {
 		ServerAddress:   *serverAddress,
 		DatabaseAddress: *dsn,
 		AccrualAddress:  *accrualAddress,
-	}
-
-	if err := cleanenv.ReadConfig("./secret.toml", cfg); err != nil {
-		panic(err)
+		JWTSecret:       key,
 	}
 
 	if err := cleanenv.ReadEnv(cfg); err != nil {

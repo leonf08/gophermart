@@ -16,13 +16,13 @@ create table if not exists orders (
 
 create table if not exists user_accounts (
     user_id uuid not null references users(user_id),
-    current integer,
-    withdrawn integer
+    current integer default 0,
+    withdrawn integer default 0
 );
 
 create table if not exists withdrawals (
     user_id uuid not null references users(user_id),
-    order_number varchar(255) not null references orders(number),
+    order_number varchar(255) not null,
     sum integer not null,
     processed_at timestamp not null
 );

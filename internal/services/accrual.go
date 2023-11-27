@@ -12,19 +12,29 @@ import (
 
 // AccrualService is a service for working with the accrual system.
 type AccrualService struct {
-	address   string
-	orderRepo OrderRepo
-	userRepo  UserRepo
-	orderNum  chan string
+	address  string
+	repo     AccrualRepo
+	log      Logger
+	orderNum chan string
 }
 
 // NewAccrual creates a new accrual service.
-func NewAccrual(orderRepo OrderRepo, userRepo UserRepo) *AccrualService {
-	return &AccrualService{
-		orderRepo: orderRepo,
-		userRepo:  userRepo,
-		orderNum:  make(chan string),
+func NewAccrual(address string, repo AccrualRepo, log Logger) *AccrualService {
+	a := &AccrualService{
+		address:  address,
+		repo:     repo,
+		log:      log,
+		orderNum: make(chan string, 10),
 	}
+
+	go func() {
+		for {
+			orderNum := <-a.orderNum
+			a.run(context.Background(), orderNum)
+		}
+	}()
+
+	return a
 }
 
 // SendOrderAccrual sends an order number to the accrual system.
@@ -33,12 +43,11 @@ func (a *AccrualService) SendOrderAccrual(orderNum string) {
 }
 
 // Run starts the accrual service.
-func (a *AccrualService) Run(ctx context.Context) error {
-	orderNum := <-a.orderNum
+func (a *AccrualService) run(ctx context.Context, orderNum string) {
 	url := fmt.Sprintf("%s/api/orders/%s", a.address, orderNum)
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		a.log.Error("accrual service - get request - error: %v", err)
 	}
 
 	defer resp.Body.Close()
@@ -47,43 +56,43 @@ func (a *AccrualService) Run(ctx context.Context) error {
 	case http.StatusOK:
 		accrualResp := &models.AccrualResponse{}
 		if err = json.NewDecoder(resp.Body).Decode(accrualResp); err != nil {
-			return err
+			a.log.Error("accrual service - decode response - error: %v", err)
 		}
 
 		switch accrualResp.Status {
 		case models.OrderStatusInvalid:
-			if err = a.orderRepo.UpdateOrder(ctx, &models.Order{
+			if err = a.repo.UpdateOrder(ctx, &models.Order{
 				Number: orderNum,
 				Status: models.OrderStatusInvalid,
 			}); err != nil {
-				return err
+				a.log.Error("accrual service - update order - error: %v", err)
 			}
 		case models.OrderStatusProcessed:
-			order, err := a.orderRepo.GetOrderByNumber(ctx, orderNum)
+			order, err := a.repo.GetOrderByNumber(ctx, orderNum)
 			if err != nil {
-				return err
+				a.log.Error("accrual service - get order - error: %v", err)
 			}
 
-			order.Status, order.Accrual = models.OrderStatusProcessed, accrualResp.Accrual
-			if err = a.orderRepo.UpdateOrder(ctx, order); err != nil {
-				return err
+			order.Status, order.Accrual = models.OrderStatusProcessed, accrualResp.Accrual*100
+			if err = a.repo.UpdateOrder(ctx, order); err != nil {
+				a.log.Error("accrual service - update order - error: %v", err)
 			}
 
-			userAccount, err := a.userRepo.GetUserAccount(ctx, order.UserID)
+			userAccount, err := a.repo.GetUserAccount(ctx, order.UserID)
 			if err != nil {
-				return err
+				a.log.Error("accrual service - get user account - error: %v", err)
 			}
 
-			userAccount.Current += accrualResp.Accrual
-			if err = a.userRepo.UpdateUserAccount(ctx, userAccount); err != nil {
-				return err
+			userAccount.Current += accrualResp.Accrual * 100
+			if err = a.repo.UpdateUserAccount(ctx, userAccount); err != nil {
+				a.log.Error("accrual service - update user account - error: %v", err)
 			}
 		case models.OrderStatusProcessing:
-			if err = a.orderRepo.UpdateOrder(ctx, &models.Order{
+			if err = a.repo.UpdateOrder(ctx, &models.Order{
 				Number: orderNum,
 				Status: models.OrderStatusProcessing,
 			}); err != nil {
-				return err
+				a.log.Error("accrual service - update order - error: %v", err)
 			}
 
 			a.SendOrderAccrual(orderNum)
@@ -93,14 +102,12 @@ func (a *AccrualService) Run(ctx context.Context) error {
 	case http.StatusTooManyRequests:
 		pause, err := strconv.Atoi(resp.Header.Get("Retry-After"))
 		if err != nil {
-			return err
+			a.log.Error("accrual service - get retry after - error: %v", err)
 		}
 
 		time.Sleep(time.Duration(pause) * time.Second)
 		a.SendOrderAccrual(orderNum)
 	case http.StatusInternalServerError:
-		return ErrAccrualInternalError
+		a.log.Error("accrual service - internal server error")
 	}
-
-	return nil
 }

@@ -10,11 +10,11 @@ import (
 // OrderManager is a service for working with orders.
 type OrderManager struct {
 	repo    OrderRepo
-	accrual AccrualService
+	accrual Accrual
 }
 
 // NewOrderManager creates a new order manager.
-func NewOrderManager(repo OrderRepo, accrual AccrualService) *OrderManager {
+func NewOrderManager(repo OrderRepo, accrual Accrual) *OrderManager {
 	return &OrderManager{
 		repo:    repo,
 		accrual: accrual,
@@ -69,6 +69,11 @@ func (o *OrderManager) GetOrdersForUser(ctx context.Context, userId string) ([]*
 	orders, err := o.repo.GetOrderList(ctx, userId)
 	if err != nil {
 		return nil, err
+	}
+
+	// Convert integer accrual to float accrual
+	for _, order := range orders {
+		order.Accrual /= 100
 	}
 
 	return orders, nil

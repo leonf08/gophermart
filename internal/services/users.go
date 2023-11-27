@@ -37,10 +37,20 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 	}
 
 	// Create user.
-	err = u.repo.CreateUser(ctx, user.Login, hashedPasswd)
+	if err = u.repo.CreateUser(ctx, user.Login, hashedPasswd); err != nil {
+		return err
+	}
+
+	// Get user.
+	storedUser, err := u.repo.GetUserByLogin(ctx, user.Login)
 	if err != nil {
 		return err
 	}
+
+	user.UserID = storedUser.UserID
+
+	// Create user account.
+	err = u.repo.CreateUserAccount(ctx, user.UserID)
 
 	return nil
 }
@@ -62,6 +72,8 @@ func (u *UserManager) LoginUser(ctx context.Context, user *models.User) error {
 	if err != nil {
 		return ErrIncorrectPassword
 	}
+
+	user.UserID = storedUser.UserID
 
 	return nil
 }
@@ -89,6 +101,10 @@ func (u *UserManager) GetUserAccount(ctx context.Context, userId string) (*model
 		return nil, err
 	}
 
+	// Convert integer sum to float sum
+	userAccount.Current /= 100
+	userAccount.Withdrawn /= 100
+
 	return userAccount, nil
 }
 
@@ -97,6 +113,8 @@ func (u *UserManager) GetUserAccount(ctx context.Context, userId string) (*model
 // If the withdrawal fails, it returns an error.
 // The withdrawal fails if the sum is greater than the current balance.
 func (u *UserManager) WithdrawFromAccount(ctx context.Context, w *models.Withdrawal) error {
+	// Convert float sum to integer sum
+	w.Sum *= 100
 	// Check if the orderNumber is valid.
 	if !utils.IsNumber(w.OrderNumber) {
 		return ErrInvalidOrderNumberFormat
@@ -143,6 +161,11 @@ func (u *UserManager) GetWithdrawals(ctx context.Context, userId string) ([]*mod
 	withdrawals, err := u.repo.GetWithdrawalList(ctx, userId)
 	if err != nil {
 		return nil, err
+	}
+
+	// Convert integer sum to float sum
+	for _, w := range withdrawals {
+		w.Sum /= 100
 	}
 
 	return withdrawals, nil

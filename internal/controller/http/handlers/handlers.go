@@ -68,6 +68,7 @@ func (h *handler) userSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Authorization", "Bearer "+token)
 	w.WriteHeader(http.StatusOK)
 }
@@ -97,6 +98,7 @@ func (h *handler) userLogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Authorization", "Bearer "+token)
 	w.WriteHeader(http.StatusOK)
 }
@@ -259,7 +261,6 @@ func logEntry(l services.Logger, r *http.Request) services.Logger {
 
 	return log.With(
 		slog.String("component", "handler"),
-		slog.String("handler", "userSignUp"),
 		slog.String("method", r.Method),
 		slog.String("url", r.URL.Path),
 	)

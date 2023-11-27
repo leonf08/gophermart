@@ -1,0 +1,255 @@
+basePath: /api/user
+consumes:
+    - application/json
+    - text/plain
+definitions:
+    Order:
+        properties:
+            accrual:
+                format: double
+                type: number
+                x-go-name: Accrual
+            number:
+                type: string
+                x-go-name: Number
+            status:
+                type: string
+                x-go-name: Status
+            uploaded_at:
+                format: date-time
+                type: string
+                x-go-name: UploadedAt
+        type: object
+        x-go-package: github.com/leonf08/gophermart.git/internal/models
+    User:
+        properties:
+            login:
+                type: string
+                x-go-name: Login
+            password:
+                type: string
+                x-go-name: Password
+        type: object
+        x-go-package: github.com/leonf08/gophermart.git/internal/models
+    UserAccount:
+        properties:
+            current:
+                format: double
+                type: number
+                x-go-name: Current
+            withdrawn:
+                format: double
+                type: number
+                x-go-name: Withdrawn
+        type: object
+        x-go-package: github.com/leonf08/gophermart.git/internal/models
+    Withdrawal:
+        properties:
+            order:
+                type: string
+                x-go-name: OrderNumber
+            processed_at:
+                format: date-time
+                type: string
+                x-go-name: ProcessedAt
+            sum:
+                format: double
+                type: number
+                x-go-name: Sum
+        type: object
+        x-go-package: github.com/leonf08/gophermart.git/internal/models
+host: localhost:8080
+info:
+    description: Documentation for Gophermart API
+    title: Gophermart API
+    version: 1.0.0
+paths:
+    /balance/:
+        get:
+            operationId: getUserBalance
+            responses:
+                "200":
+                    $ref: '#/responses/getBalanceResponse'
+                "401":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            security:
+                - api_key: []
+            summary: Get user balance.
+            tags:
+                - balance
+    /balance/withdraw/:
+        post:
+            consumes:
+                - application/json
+            operationId: withdraw
+            parameters:
+                - in: body
+                  name: Body
+                  schema:
+                    properties:
+                        order:
+                            type: string
+                            x-go-name: Order
+                        sum:
+                            format: double
+                            type: number
+                            x-go-name: Sum
+                    type: object
+            responses:
+                "200":
+                    $ref: '#/responses/noContentResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "401":
+                    $ref: '#/responses/errorResponse'
+                "402":
+                    $ref: '#/responses/errorResponse'
+                "422":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            security:
+                - api_key: []
+            summary: Withdraw money from the user balance.
+            tags:
+                - balance
+    /login/:
+        post:
+            consumes:
+                - application/json
+            operationId: userLogIn
+            parameters:
+                - in: body
+                  name: Body
+                  schema:
+                    $ref: '#/definitions/User'
+            responses:
+                "200":
+                    $ref: '#/responses/noContentResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "401":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            summary: Log in a user.
+            tags:
+                - auth
+    /orders/:
+        get:
+            operationId: getOrders
+            responses:
+                "200":
+                    $ref: '#/responses/getOrdersResponse'
+                "204":
+                    $ref: '#/responses/noContentResponse'
+                "401":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            security:
+                - api_key: []
+            summary: Get orders.
+            tags:
+                - orders
+        post:
+            consumes:
+                - text/plain
+            operationId: uploadOrder
+            parameters:
+                - in: body
+                  name: Body
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    $ref: '#/responses/noContentResponse'
+                "202":
+                    $ref: '#/responses/noContentResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "401":
+                    $ref: '#/responses/errorResponse'
+                "409":
+                    $ref: '#/responses/errorResponse'
+                "422":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            security:
+                - api_key: []
+            summary: Upload an order.
+            tags:
+                - orders
+    /register/:
+        post:
+            consumes:
+                - application/json
+            operationId: userSignUp
+            parameters:
+                - in: body
+                  name: Body
+                  schema:
+                    $ref: '#/definitions/User'
+            responses:
+                "200":
+                    $ref: '#/responses/noContentResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "409":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            summary: Register a new user.
+            tags:
+                - auth
+    /withdrawals/:
+        get:
+            operationId: getWithdrawals
+            responses:
+                "200":
+                    $ref: '#/responses/getOrdersResponse'
+                "204":
+                    $ref: '#/responses/noContentResponse'
+                "401":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            security:
+                - api_key: []
+            summary: Get withdrawals.
+            tags:
+                - balance
+produces:
+    - application/json
+responses:
+    errorResponse:
+        description: errorResponse is a response body for the userSignUp handler when the input is invalid.
+    getBalanceResponse:
+        description: getBalanceResponse is a response body for the getUserBalance handler when the input is valid.
+        schema:
+            $ref: '#/definitions/UserAccount'
+    getOrdersResponse:
+        description: getOrdersResponse is a response body for the getOrders handler when the input is valid.
+        schema:
+            items:
+                $ref: '#/definitions/Order'
+            type: array
+    getWithdrawalsResponse:
+        description: getWithdrawalsResponse is a response body for the getWithdrawals handler when the input is valid.
+        schema:
+            items:
+                $ref: '#/definitions/Withdrawal'
+            type: array
+    noContentResponse:
+        description: noContentResponse is a response body when content is empty.
+schemes:
+    - http
+securityDefinitions:
+    api_key:
+        in: header
+        name: Authorization
+        type: apiKey
+swagger: "2.0"

@@ -1,12 +1,15 @@
 package postgres
 
 import (
+	"errors"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
+
+const sourceURL = "file://internal/database/postgres/migrations"
 
 // NewConnection opens a connection to the database.
 // If connection fails, returns error.
@@ -21,12 +24,12 @@ func NewConnection(dsn string) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(sourceURL, "postgres", driver)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = m.Up(); err != nil {
+	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return nil, err
 	}
 
