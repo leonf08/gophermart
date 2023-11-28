@@ -26,15 +26,15 @@ func newHandler(r chi.Router, users services.Users, orders services.Orders, auth
 		log:    log,
 	}
 
-	r.Post("/register/", h.userSignUp)
-	r.Post("/login/", h.userLogIn)
+	r.Post("/register", h.userSignUp)
+	r.Post("/login", h.userLogIn)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Auth(auth))
-		r.Post("/orders/", h.uploadOrder)
-		r.Get("/orders/", h.getOrders)
-		r.Get("/balance/", h.getUserBalance)
-		r.Post("/balance/withdraw/", h.withdraw)
-		r.Get("/withdrawals/", h.getWithdrawals)
+		r.Post("/orders", h.uploadOrder)
+		r.Get("/orders", h.getOrders)
+		r.Get("/balance", h.getUserBalance)
+		r.Post("/balance/withdraw", h.withdraw)
+		r.Get("/withdrawals", h.getWithdrawals)
 	})
 }
 
@@ -106,7 +106,7 @@ func (h *handler) userLogIn(w http.ResponseWriter, r *http.Request) {
 func (h *handler) uploadOrder(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(string)
 
 	orderNum, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -115,7 +115,7 @@ func (h *handler) uploadOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.orders.CreateNewOrder(r.Context(), userId, string(orderNum))
+	err = h.orders.CreateNewOrder(r.Context(), userID, string(orderNum))
 	if err != nil {
 		entry.Error(err.Error())
 		switch {
@@ -140,9 +140,9 @@ func (h *handler) uploadOrder(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getOrders(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(string)
 
-	orders, err := h.orders.GetOrdersForUser(r.Context(), userId)
+	orders, err := h.orders.GetOrdersForUser(r.Context(), userID)
 	if err != nil {
 		entry.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -171,9 +171,9 @@ func (h *handler) getOrders(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getUserBalance(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(string)
 
-	balance, err := h.users.GetUserAccount(r.Context(), userId)
+	balance, err := h.users.GetUserAccount(r.Context(), userID)
 	if err != nil {
 		entry.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -192,7 +192,7 @@ func (h *handler) getUserBalance(w http.ResponseWriter, r *http.Request) {
 func (h *handler) withdraw(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(string)
 
 	withdrawal := &models.Withdrawal{}
 	err := json.NewDecoder(r.Body).Decode(withdrawal)
@@ -202,7 +202,7 @@ func (h *handler) withdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	withdrawal.UserID = userId
+	withdrawal.UserID = userID
 	err = h.users.WithdrawFromAccount(r.Context(), withdrawal)
 	if err != nil {
 		entry.Error(err.Error())
@@ -225,9 +225,9 @@ func (h *handler) withdraw(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getWithdrawals(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(string)
 
-	withdrawals, err := h.users.GetWithdrawals(r.Context(), userId)
+	withdrawals, err := h.users.GetWithdrawals(r.Context(), userID)
 	if err != nil {
 		entry.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

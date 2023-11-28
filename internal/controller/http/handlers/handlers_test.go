@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"github.com/leonf08/gophermart.git/internal/controller/http/handlers/middleware"
 	"github.com/leonf08/gophermart.git/internal/models"
 	"github.com/leonf08/gophermart.git/internal/services"
 	"github.com/leonf08/gophermart.git/internal/services/mocks"
@@ -39,12 +40,12 @@ func Test_handler_getOrders(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID string
 		want   want
 	}{
 		{
 			name:   "1. get orders success",
-			userId: "user",
+			userID: "user",
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -52,7 +53,7 @@ func Test_handler_getOrders(t *testing.T) {
 		},
 		{
 			name:   "2. get orders, no content",
-			userId: "admin",
+			userID: "admin",
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				status:      http.StatusNoContent,
@@ -71,15 +72,15 @@ func Test_handler_getOrders(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			orders.
 				On("GetOrdersForUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId string) ([]*models.Order, error) {
-					if userId == "user" {
+				Return(func(ctx context.Context, userID string) ([]*models.Order, error) {
+					if userID == "user" {
 						return []*models.Order{
 							{
 								Number:     "123456789",
 								UploadedAt: time.Now(),
 							},
 						}, nil
-					} else if userId == "admin" {
+					} else if userID == "admin" {
 						return []*models.Order{}, nil
 					}
 
@@ -88,7 +89,7 @@ func Test_handler_getOrders(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			h.getOrders(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.getOrders(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			orders.AssertExpectations(t)
 
@@ -116,12 +117,12 @@ func Test_handler_getUserBalance(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID string
 		want   want
 	}{
 		{
 			name:   "1. get user balance success",
-			userId: "user",
+			userID: "user",
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -140,8 +141,8 @@ func Test_handler_getUserBalance(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			users.
 				On("GetUserAccount", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId string) (*models.UserAccount, error) {
-					if userId == "user" {
+				Return(func(ctx context.Context, userID string) (*models.UserAccount, error) {
+					if userID == "user" {
 						return &models.UserAccount{
 							Current:   100,
 							Withdrawn: 0,
@@ -153,7 +154,7 @@ func Test_handler_getUserBalance(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			h.getUserBalance(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.getUserBalance(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			users.AssertExpectations(t)
 
@@ -181,12 +182,12 @@ func Test_handler_getWithdrawals(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID string
 		want   want
 	}{
 		{
 			name:   "1. get withdrawals success",
-			userId: "user",
+			userID: "user",
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -194,7 +195,7 @@ func Test_handler_getWithdrawals(t *testing.T) {
 		},
 		{
 			name:   "2. get withdrawals, no content",
-			userId: "admin",
+			userID: "admin",
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				status:      http.StatusNoContent,
@@ -213,8 +214,8 @@ func Test_handler_getWithdrawals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			users.
 				On("GetWithdrawals", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId string) ([]*models.Withdrawal, error) {
-					if userId == "user" {
+				Return(func(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
+					if userID == "user" {
 						return []*models.Withdrawal{
 							{
 								OrderNumber: "123456789",
@@ -222,7 +223,7 @@ func Test_handler_getWithdrawals(t *testing.T) {
 								ProcessedAt: time.Now(),
 							},
 						}, nil
-					} else if userId == "admin" {
+					} else if userID == "admin" {
 						return []*models.Withdrawal{}, nil
 					}
 
@@ -231,7 +232,7 @@ func Test_handler_getWithdrawals(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			h.getWithdrawals(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.getWithdrawals(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			users.AssertExpectations(t)
 
@@ -309,7 +310,7 @@ func Test_handler_uploadOrder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			orders.
 				On("CreateNewOrder", mock.Anything, mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId, orderNum string) error {
+				Return(func(ctx context.Context, userID, orderNum string) error {
 					if orderNum == "1234567" {
 						return services.ErrOrderAlreadyExists
 					} else if orderNum == "12345678" {
@@ -327,7 +328,7 @@ func Test_handler_uploadOrder(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
-			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), "userId", "user")))
+			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, "user")))
 
 			orders.AssertExpectations(t)
 
@@ -527,13 +528,13 @@ func Test_handler_withdraw(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID string
 		body   string
 		want   want
 	}{
 		{
 			name:   "1. withdraw success",
-			userId: "user",
+			userID: "user",
 			body:   `{"order":"123456789","sum":100}`,
 			want: want{
 				status: http.StatusOK,
@@ -541,7 +542,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "2. withdraw fail, insufficient funds",
-			userId: "user",
+			userID: "user",
 			body:   `{"order":"123456789","sum":1000}`,
 			want: want{
 				status: http.StatusPaymentRequired,
@@ -549,7 +550,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "3. withdraw fail, invalid order number",
-			userId: "user",
+			userID: "user",
 			body:   `{"order":"12345678dfg","sum":100}`,
 			want: want{
 				status: http.StatusBadRequest,
@@ -557,7 +558,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "4. withdraw fail, invalid order number format",
-			userId: "user",
+			userID: "user",
 			body:   `{"order":"1","sum":100}`,
 			want: want{
 				status: http.StatusUnprocessableEntity,
@@ -572,7 +573,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "6. withdraw fail, bad request",
-			userId: "user",
+			userID: "user",
 			want: want{
 				status: http.StatusBadRequest,
 			},
@@ -599,7 +600,7 @@ func Test_handler_withdraw(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
-			h.withdraw(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.withdraw(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			users.AssertExpectations(t)
 

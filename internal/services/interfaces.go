@@ -12,18 +12,18 @@ type (
 	UserRepo interface {
 		CreateUser(ctx context.Context, login, hashedPasswd string) error
 		GetUserByLogin(ctx context.Context, login string) (*models.User, error)
-		GetUserAccount(ctx context.Context, userId string) (*models.UserAccount, error)
+		GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error)
 		DoWithdrawal(ctx context.Context, withdrawal *models.Withdrawal) error
 		UpdateUserAccount(ctx context.Context, userAccount *models.UserAccount) error
-		GetWithdrawalList(ctx context.Context, userId string) ([]*models.Withdrawal, error)
-		CreateUserAccount(ctx context.Context, userId string) error
+		GetWithdrawalList(ctx context.Context, userID string) ([]*models.Withdrawal, error)
+		CreateUserAccount(ctx context.Context, userID string) error
 	}
 
 	// OrderRepo is an interface for working with the order repository.
 	OrderRepo interface {
 		CreateOrder(ctx context.Context, order models.Order) error
 		GetOrderByNumber(ctx context.Context, orderNum string) (*models.Order, error)
-		GetOrderList(ctx context.Context, userId string) ([]*models.Order, error)
+		GetOrderList(ctx context.Context, userID string) ([]*models.Order, error)
 		UpdateOrder(ctx context.Context, order *models.Order) error
 	}
 
@@ -46,15 +46,15 @@ type (
 		RegisterUser(ctx context.Context, user *models.User) error
 		LoginUser(ctx context.Context, user *models.User) error
 		WithdrawFromAccount(ctx context.Context, w *models.Withdrawal) error
-		GetUserAccount(ctx context.Context, userId string) (*models.UserAccount, error)
-		GetWithdrawals(ctx context.Context, userId string) ([]*models.Withdrawal, error)
+		GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error)
+		GetWithdrawals(ctx context.Context, userID string) ([]*models.Withdrawal, error)
 		GetToken(user *models.User) (string, error)
 	}
 
 	// Orders is an interface for working with the order service.
 	Orders interface {
-		CreateNewOrder(ctx context.Context, userId, orderNum string) error
-		GetOrdersForUser(ctx context.Context, userId string) ([]*models.Order, error)
+		CreateNewOrder(ctx context.Context, userID, orderNum string) error
+		GetOrdersForUser(ctx context.Context, userID string) ([]*models.Order, error)
 	}
 
 	// Logger is an interface for working with the logging tools

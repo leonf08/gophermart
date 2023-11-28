@@ -46,10 +46,10 @@ func (r *Repository) GetUserByLogin(ctx context.Context, login string) (*models.
 // GetUserAccount gets a user account from database by user id.
 // If user account does not exist, returns error.
 // If user account exists, returns nil.
-func (r *Repository) GetUserAccount(ctx context.Context, userId string) (*models.UserAccount, error) {
+func (r *Repository) GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error) {
 	query := `SELECT * FROM user_accounts WHERE user_id = $1`
 	userAccount := &models.UserAccount{}
-	err := r.db.GetContext(ctx, userAccount, query, userId)
+	err := r.db.GetContext(ctx, userAccount, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +74,9 @@ func (r *Repository) DoWithdrawal(ctx context.Context, withdrawal *models.Withdr
 // CreateUserAccount creates a new user account in database.
 // If user account creation fails, returns error.
 // If user account creation succeeds, returns nil.
-func (r *Repository) CreateUserAccount(ctx context.Context, userId string) error {
+func (r *Repository) CreateUserAccount(ctx context.Context, userID string) error {
 	query := `INSERT INTO user_accounts (user_id) VALUES ($1)`
-	_, err := r.db.ExecContext(ctx, query, userId)
+	_, err := r.db.ExecContext(ctx, query, userID)
 	if err != nil {
 		return err
 	}
@@ -100,10 +100,10 @@ func (r *Repository) UpdateUserAccount(ctx context.Context, userAccount *models.
 // GetWithdrawalList gets a list of withdrawals from database by user id.
 // If list of withdrawals does not exist, returns error.
 // If list of withdrawals exists, returns nil.
-func (r *Repository) GetWithdrawalList(ctx context.Context, userId string) ([]*models.Withdrawal, error) {
+func (r *Repository) GetWithdrawalList(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
 	query := `SELECT * FROM withdrawals WHERE user_id = $1`
 	withdrawals := make([]*models.Withdrawal, 0)
-	err := r.db.SelectContext(ctx, &withdrawals, query, userId)
+	err := r.db.SelectContext(ctx, &withdrawals, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -142,10 +142,10 @@ func (r *Repository) GetOrderByNumber(ctx context.Context, orderNum string) (*mo
 // GetOrderList gets a list of orders from database by user id.
 // If list of orders does not exist, returns error.
 // If list of orders exists, returns nil.
-func (r *Repository) GetOrderList(ctx context.Context, userId string) ([]*models.Order, error) {
+func (r *Repository) GetOrderList(ctx context.Context, userID string) ([]*models.Order, error) {
 	query := `SELECT * FROM orders WHERE user_id = $1`
 	orders := make([]*models.Order, 0)
-	err := r.db.SelectContext(ctx, &orders, query, userId)
+	err := r.db.SelectContext(ctx, &orders, query, userID)
 	if err != nil {
 		return nil, err
 	}

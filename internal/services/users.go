@@ -50,7 +50,9 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 	user.UserID = storedUser.UserID
 
 	// Create user account.
-	err = u.repo.CreateUserAccount(ctx, user.UserID)
+	if err = u.repo.CreateUserAccount(ctx, user.UserID); err != nil {
+		return err
+	}
 
 	return nil
 }

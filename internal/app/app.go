@@ -35,7 +35,7 @@ func Run(cfg *config.Config) {
 	log.Info("app - Run - server.ListenAndServe", "address", cfg.ServerAddress)
 
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM, os.Kill)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case err := <-server.Err():

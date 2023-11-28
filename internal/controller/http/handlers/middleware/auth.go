@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+type KeyUserID struct{}
+
 func Auth(auth services.Authenticator) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +24,7 @@ func Auth(auth services.Authenticator) func(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "userId", claims.UserID)
+			ctx := context.WithValue(r.Context(), KeyUserID{}, claims.UserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
