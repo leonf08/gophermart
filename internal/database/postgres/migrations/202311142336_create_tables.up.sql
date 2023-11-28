@@ -10,7 +10,7 @@ create table if not exists orders (
     number varchar(255) primary key,
     user_id uuid not null references users(user_id),
     status varchar(255) not null,
-    accrual integer,
+    accrual integer default 0,
     uploaded_at timestamp not null
 );
 

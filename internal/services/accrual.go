@@ -27,12 +27,7 @@ func NewAccrual(address string, repo AccrualRepo, log Logger) *AccrualService {
 		orderNum: make(chan string, 10),
 	}
 
-	go func() {
-		for {
-			orderNum := <-a.orderNum
-			a.run(context.Background(), orderNum)
-		}
-	}()
+	go a.run(context.Background())
 
 	return a
 }
@@ -43,11 +38,20 @@ func (a *AccrualService) SendOrderAccrual(orderNum string) {
 }
 
 // Run starts the accrual service.
-func (a *AccrualService) run(ctx context.Context, orderNum string) {
+func (a *AccrualService) run(ctx context.Context) {
+	for {
+		orderNum := <-a.orderNum
+		if err := a.process(ctx, orderNum); err != nil {
+			a.log.Error("accrual - run - a.process", "error", err)
+		}
+	}
+}
+
+func (a *AccrualService) process(ctx context.Context, orderNum string) error {
 	url := fmt.Sprintf("%s/api/orders/%s", a.address, orderNum)
 	resp, err := http.Get(url)
 	if err != nil {
-		a.log.Error("accrual service - get request - error: %v", err)
+		return err
 	}
 
 	defer resp.Body.Close()
@@ -56,7 +60,7 @@ func (a *AccrualService) run(ctx context.Context, orderNum string) {
 	case http.StatusOK:
 		accrualResp := &models.AccrualResponse{}
 		if err = json.NewDecoder(resp.Body).Decode(accrualResp); err != nil {
-			a.log.Error("accrual service - decode response - error: %v", err)
+			return err
 		}
 
 		switch accrualResp.Status {
@@ -65,34 +69,34 @@ func (a *AccrualService) run(ctx context.Context, orderNum string) {
 				Number: orderNum,
 				Status: models.OrderStatusInvalid,
 			}); err != nil {
-				a.log.Error("accrual service - update order - error: %v", err)
+				return err
 			}
 		case models.OrderStatusProcessed:
 			order, err := a.repo.GetOrderByNumber(ctx, orderNum)
 			if err != nil {
-				a.log.Error("accrual service - get order - error: %v", err)
+				return err
 			}
 
 			order.Status, order.Accrual = models.OrderStatusProcessed, accrualResp.Accrual*100
 			if err = a.repo.UpdateOrder(ctx, order); err != nil {
-				a.log.Error("accrual service - update order - error: %v", err)
+				return err
 			}
 
 			userAccount, err := a.repo.GetUserAccount(ctx, order.UserID)
 			if err != nil {
-				a.log.Error("accrual service - get user account - error: %v", err)
+				return err
 			}
 
 			userAccount.Current += accrualResp.Accrual * 100
 			if err = a.repo.UpdateUserAccount(ctx, userAccount); err != nil {
-				a.log.Error("accrual service - update user account - error: %v", err)
+				return err
 			}
 		case models.OrderStatusProcessing:
 			if err = a.repo.UpdateOrder(ctx, &models.Order{
 				Number: orderNum,
 				Status: models.OrderStatusProcessing,
 			}); err != nil {
-				a.log.Error("accrual service - update order - error: %v", err)
+				return err
 			}
 
 			a.SendOrderAccrual(orderNum)
@@ -102,12 +106,14 @@ func (a *AccrualService) run(ctx context.Context, orderNum string) {
 	case http.StatusTooManyRequests:
 		pause, err := strconv.Atoi(resp.Header.Get("Retry-After"))
 		if err != nil {
-			a.log.Error("accrual service - get retry after - error: %v", err)
+			return err
 		}
 
 		time.Sleep(time.Duration(pause) * time.Second)
 		a.SendOrderAccrual(orderNum)
 	case http.StatusInternalServerError:
-		a.log.Error("accrual service - internal server error")
+		return fmt.Errorf("accrual system internal error")
 	}
+
+	return nil
 }

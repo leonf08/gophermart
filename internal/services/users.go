@@ -97,8 +97,8 @@ func (u *UserManager) GetToken(user *models.User) (string, error) {
 // GetUserAccount returns a user account.
 // If the user account is found, it returns the user account and nil.
 // If the user account is not found, it returns nil and an error.
-func (u *UserManager) GetUserAccount(ctx context.Context, userId string) (*models.UserAccount, error) {
-	userAccount, err := u.repo.GetUserAccount(ctx, userId)
+func (u *UserManager) GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error) {
+	userAccount, err := u.repo.GetUserAccount(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,8 +159,8 @@ func (u *UserManager) WithdrawFromAccount(ctx context.Context, w *models.Withdra
 // GetWithdrawals returns a list of withdrawals.
 // If the list of withdrawals is found, it returns the list of withdrawals and nil.
 // If the list of withdrawals is not found, it returns nil and an error.
-func (u *UserManager) GetWithdrawals(ctx context.Context, userId string) ([]*models.Withdrawal, error) {
-	withdrawals, err := u.repo.GetWithdrawalList(ctx, userId)
+func (u *UserManager) GetWithdrawals(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
+	withdrawals, err := u.repo.GetWithdrawalList(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
