@@ -52,6 +52,8 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 		return err
 	}
 
+	user.UserID = userID
+
 	return nil
 }
 
