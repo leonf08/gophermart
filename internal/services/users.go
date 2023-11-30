@@ -41,16 +41,14 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 		return err
 	}
 
-	// Get user.
-	storedUser, err := u.repo.GetUserByLogin(ctx, user.Login)
+	// Get user id.
+	userID, err := u.repo.GetUserID(ctx, user.Login)
 	if err != nil {
 		return err
 	}
 
-	user.UserID = storedUser.UserID
-
 	// Create user account.
-	if err = u.repo.CreateUserAccount(ctx, user.UserID); err != nil {
+	if err = u.repo.CreateUserAccount(ctx, userID); err != nil {
 		return err
 	}
 
@@ -63,6 +61,10 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 // The user login fails if the user does not exist or the password is incorrect.
 // The user login succeeds if the user exists and the password is correct.
 func (u *UserManager) LoginUser(ctx context.Context, user *models.User) error {
+	// Check if the login is valid.
+	if !utils.IsLoginValid(user.Login) {
+		return ErrInvalidLoginFormat
+	}
 	// Check if the user exists.
 	storedUser, err := u.repo.GetUserByLogin(ctx, user.Login)
 	if err != nil {

@@ -7,12 +7,16 @@ import (
 
 //go:generate mockery --name Users --output ./mocks --filename users_mock.go
 //go:generate mockery --name Orders --output ./mocks --filename orders_mock.go
+//go:generate mockery --name Authenticator --output ./mocks --filename authenticator_mock.go
+//go:generate mockery --name UserRepo --output ./mocks --filename user_repo_mock.go
+//go:generate mockery --name OrderRepo --output ./mocks --filename order_repo_mock.go
 type (
 	// UserRepo is an interface for working with the user repository.
 	UserRepo interface {
 		CreateUser(ctx context.Context, login, hashedPasswd string) error
 		GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 		GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error)
+		GetUserID(ctx context.Context, login string) (string, error)
 		DoWithdrawal(ctx context.Context, withdrawal *models.Withdrawal) error
 		UpdateUserAccount(ctx context.Context, userAccount *models.UserAccount) error
 		GetWithdrawalList(ctx context.Context, userID string) ([]*models.Withdrawal, error)

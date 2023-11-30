@@ -38,17 +38,17 @@ func (_m *Users) GetToken(user *models.User) (string, error) {
 	return r0, r1
 }
 
-// GetUserAccount provides a mock function with given fields: ctx, userId
-func (_m *Users) GetUserAccount(ctx context.Context, userId string) (*models.UserAccount, error) {
-	ret := _m.Called(ctx, userId)
+// GetUserAccount provides a mock function with given fields: ctx, userID
+func (_m *Users) GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error) {
+	ret := _m.Called(ctx, userID)
 
 	var r0 *models.UserAccount
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.UserAccount, error)); ok {
-		return rf(ctx, userId)
+		return rf(ctx, userID)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) *models.UserAccount); ok {
-		r0 = rf(ctx, userId)
+		r0 = rf(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.UserAccount)
@@ -56,7 +56,7 @@ func (_m *Users) GetUserAccount(ctx context.Context, userId string) (*models.Use
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, userId)
+		r1 = rf(ctx, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -64,17 +64,17 @@ func (_m *Users) GetUserAccount(ctx context.Context, userId string) (*models.Use
 	return r0, r1
 }
 
-// GetWithdrawals provides a mock function with given fields: ctx, userId
-func (_m *Users) GetWithdrawals(ctx context.Context, userId string) ([]*models.Withdrawal, error) {
-	ret := _m.Called(ctx, userId)
+// GetWithdrawals provides a mock function with given fields: ctx, userID
+func (_m *Users) GetWithdrawals(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
+	ret := _m.Called(ctx, userID)
 
 	var r0 []*models.Withdrawal
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*models.Withdrawal, error)); ok {
-		return rf(ctx, userId)
+		return rf(ctx, userID)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) []*models.Withdrawal); ok {
-		r0 = rf(ctx, userId)
+		r0 = rf(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.Withdrawal)
@@ -82,7 +82,7 @@ func (_m *Users) GetWithdrawals(ctx context.Context, userId string) ([]*models.W
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, userId)
+		r1 = rf(ctx, userID)
 	} else {
 		r1 = ret.Error(1)
 	}

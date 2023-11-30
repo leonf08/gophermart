@@ -68,25 +68,25 @@ func Test_handler_getOrders(t *testing.T) {
 		},
 	}
 
+	orders.
+		On("GetOrdersForUser", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID string) ([]*models.Order, error) {
+			if userID == "user" {
+				return []*models.Order{
+					{
+						Number:     "123456789",
+						UploadedAt: time.Now(),
+					},
+				}, nil
+			} else if userID == "admin" {
+				return []*models.Order{}, nil
+			}
+
+			return nil, errors.New("internal server error")
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orders.
-				On("GetOrdersForUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userID string) ([]*models.Order, error) {
-					if userID == "user" {
-						return []*models.Order{
-							{
-								Number:     "123456789",
-								UploadedAt: time.Now(),
-							},
-						}, nil
-					} else if userID == "admin" {
-						return []*models.Order{}, nil
-					}
-
-					return nil, errors.New("internal server error")
-				})
-
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
 			h.getOrders(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
@@ -137,21 +137,21 @@ func Test_handler_getUserBalance(t *testing.T) {
 		},
 	}
 
+	users.
+		On("GetUserAccount", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID string) (*models.UserAccount, error) {
+			if userID == "user" {
+				return &models.UserAccount{
+					Current:   100,
+					Withdrawn: 0,
+				}, nil
+			}
+
+			return nil, errors.New("internal server error")
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("GetUserAccount", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userID string) (*models.UserAccount, error) {
-					if userID == "user" {
-						return &models.UserAccount{
-							Current:   100,
-							Withdrawn: 0,
-						}, nil
-					}
-
-					return nil, errors.New("internal server error")
-				})
-
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
 			h.getUserBalance(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
@@ -210,26 +210,26 @@ func Test_handler_getWithdrawals(t *testing.T) {
 		},
 	}
 
+	users.
+		On("GetWithdrawals", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
+			if userID == "user" {
+				return []*models.Withdrawal{
+					{
+						OrderNumber: "123456789",
+						Sum:         100,
+						ProcessedAt: time.Now(),
+					},
+				}, nil
+			} else if userID == "admin" {
+				return []*models.Withdrawal{}, nil
+			}
+
+			return nil, errors.New("internal server error")
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("GetWithdrawals", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
-					if userID == "user" {
-						return []*models.Withdrawal{
-							{
-								OrderNumber: "123456789",
-								Sum:         100,
-								ProcessedAt: time.Now(),
-							},
-						}, nil
-					} else if userID == "admin" {
-						return []*models.Withdrawal{}, nil
-					}
-
-					return nil, errors.New("internal server error")
-				})
-
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
 			h.getWithdrawals(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
@@ -306,26 +306,26 @@ func Test_handler_uploadOrder(t *testing.T) {
 		},
 	}
 
+	orders.
+		On("CreateNewOrder", mock.Anything, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID, orderNum string) error {
+			if orderNum == "1234567" {
+				return services.ErrOrderAlreadyExists
+			} else if orderNum == "12345678" {
+				return services.ErrOrderAlreadyExistsForUser
+			} else if orderNum == "123456789" {
+				return errors.New("internal server error")
+			} else if orderNum == "12345hfjfh" {
+				return services.ErrInvalidOrderNumber
+			} else if orderNum == "1" {
+				return services.ErrInvalidOrderNumberFormat
+			}
+
+			return nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orders.
-				On("CreateNewOrder", mock.Anything, mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userID, orderNum string) error {
-					if orderNum == "1234567" {
-						return services.ErrOrderAlreadyExists
-					} else if orderNum == "12345678" {
-						return services.ErrOrderAlreadyExistsForUser
-					} else if orderNum == "123456789" {
-						return errors.New("internal server error")
-					} else if orderNum == "12345hfjfh" {
-						return services.ErrInvalidOrderNumber
-					} else if orderNum == "1" {
-						return services.ErrInvalidOrderNumberFormat
-					}
-
-					return nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
 			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, "user")))
@@ -387,28 +387,28 @@ func Test_handler_userLogIn(t *testing.T) {
 		},
 	}
 
+	users.
+		On("LoginUser", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, user *models.User) error {
+			if user.Password == "test" {
+				return errors.New("unauthorized")
+			}
+
+			return nil
+		})
+
+	users.
+		On("GetToken", mock.Anything).
+		Return(func(user *models.User) (string, error) {
+			if user.Login == "admin" {
+				return "", errors.New("internal server error")
+			}
+
+			return "token", nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("LoginUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, user *models.User) error {
-					if user.Password == "test" {
-						return errors.New("unauthorized")
-					}
-
-					return nil
-				})
-
-			users.
-				On("GetToken", mock.Anything).
-				Return(func(user *models.User) (string, error) {
-					if user.Login == "admin" {
-						return "", errors.New("internal server error")
-					}
-
-					return "token", nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
 			h.userLogIn(resp, req)
@@ -477,29 +477,29 @@ func Test_handler_userSignUp(t *testing.T) {
 		},
 	}
 
+	users.
+		On("RegisterUser", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, user *models.User) error {
+			if user.Login == "user" {
+				return services.ErrUserAlreadyExists
+			} else if user.Login == "admin" {
+				return errors.New("internal server error")
+			}
+			return nil
+		})
+
+	users.
+		On("GetToken", mock.Anything).
+		Return(func(user *models.User) (string, error) {
+			if user.Login == "login" {
+				return "", errors.New("internal server error")
+			}
+
+			return "token", nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("RegisterUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, user *models.User) error {
-					if user.Login == "user" {
-						return services.ErrUserAlreadyExists
-					} else if user.Login == "admin" {
-						return errors.New("internal server error")
-					}
-					return nil
-				})
-
-			users.
-				On("GetToken", mock.Anything).
-				Return(func(user *models.User) (string, error) {
-					if user.Login == "login" {
-						return "", errors.New("internal server error")
-					}
-
-					return "token", nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
 			h.userSignUp(resp, req)
@@ -580,24 +580,24 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 	}
 
+	users.
+		On("WithdrawFromAccount", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, withdrawal *models.Withdrawal) error {
+			if withdrawal.Sum == 1000 {
+				return services.ErrInsufficientFunds
+			} else if withdrawal.OrderNumber == "12345678dfg" {
+				return services.ErrInvalidOrderNumber
+			} else if withdrawal.OrderNumber == "1" {
+				return services.ErrInvalidOrderNumberFormat
+			} else if withdrawal.UserID == "" {
+				return errors.New("internal server error")
+			}
+
+			return nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("WithdrawFromAccount", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, withdrawal *models.Withdrawal) error {
-					if withdrawal.Sum == 1000 {
-						return services.ErrInsufficientFunds
-					} else if withdrawal.OrderNumber == "12345678dfg" {
-						return services.ErrInvalidOrderNumber
-					} else if withdrawal.OrderNumber == "1" {
-						return services.ErrInvalidOrderNumberFormat
-					} else if withdrawal.UserID == "" {
-						return errors.New("internal server error")
-					}
-
-					return nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
 			h.withdraw(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))

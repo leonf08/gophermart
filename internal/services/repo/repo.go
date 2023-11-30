@@ -43,6 +43,20 @@ func (r *Repository) GetUserByLogin(ctx context.Context, login string) (*models.
 	return user, nil
 }
 
+// GetUserID gets a user id from database by login.
+// If user id does not exist, returns error.
+// If user id exists, returns nil.
+func (r *Repository) GetUserID(ctx context.Context, login string) (string, error) {
+	query := `SELECT user_id FROM users WHERE login = $1`
+	var userID string
+	err := r.db.GetContext(ctx, &userID, query, login)
+	if err != nil {
+		return "", err
+	}
+
+	return userID, nil
+}
+
 // GetUserAccount gets a user account from database by user id.
 // If user account does not exist, returns error.
 // If user account exists, returns nil.
