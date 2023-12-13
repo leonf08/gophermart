@@ -62,7 +62,7 @@ func (r *Repository) GetUserAccount(ctx context.Context, userID int64) (*models.
 // If withdrawal fails, returns error.
 // If withdrawal succeeds, returns nil.
 func (r *Repository) DoWithdrawal(ctx context.Context, w *models.Withdrawal) error {
-	queryWithdraw := `INSERT INTO withdrawals (user_id, order_number, sum, processed_at) VALUES ($1, $2, $3, $4)`
+	queryWithdraw := `INSERT INTO withdrawals (user_id, order_number, sum, updated_at) VALUES ($1, $2, $3, $4)`
 	queryUpdateAcc := `UPDATE users SET current = current - $1, withdrawn = withdrawn + $1 WHERE user_id = $2`
 
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -103,7 +103,7 @@ func (r *Repository) GetWithdrawalList(ctx context.Context, userID int64) ([]*mo
 // If order creation fails, returns error.
 // If order creation succeeds, returns nil.
 func (r *Repository) CreateOrder(ctx context.Context, order models.Order) error {
-	query := `INSERT INTO orders (user_id, number, status, uploaded_at) VALUES ($1, $2, $3, $4)`
+	query := `INSERT INTO orders (user_id, number, status, created_at) VALUES ($1, $2, $3, $4)`
 	_, err := r.db.ExecContext(ctx, query, order.UserID, order.Number, order.Status, order.UploadedAt)
 	if err != nil {
 		return err
