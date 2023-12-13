@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/leonf08/gophermart.git/internal/controller/http/handlers/middleware"
 	"github.com/leonf08/gophermart.git/internal/models"
 	"github.com/leonf08/gophermart.git/internal/services"
@@ -52,12 +54,13 @@ func (h *handler) userSignUp(w http.ResponseWriter, r *http.Request) {
 	err = h.users.RegisterUser(r.Context(), user)
 	if err != nil {
 		entry.Error(err.Error())
-		switch {
-		case errors.Is(err, services.ErrUserAlreadyExists):
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
 			http.Error(w, err.Error(), http.StatusConflict)
-		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -106,7 +109,7 @@ func (h *handler) userLogIn(w http.ResponseWriter, r *http.Request) {
 func (h *handler) uploadOrder(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userID := r.Context().Value(middleware.KeyUserID{}).(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(int64)
 
 	orderNum, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -140,7 +143,7 @@ func (h *handler) uploadOrder(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getOrders(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userID := r.Context().Value(middleware.KeyUserID{}).(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(int64)
 
 	orders, err := h.orders.GetOrdersForUser(r.Context(), userID)
 	if err != nil {
@@ -171,7 +174,7 @@ func (h *handler) getOrders(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getUserBalance(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userID := r.Context().Value(middleware.KeyUserID{}).(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(int64)
 
 	balance, err := h.users.GetUserAccount(r.Context(), userID)
 	if err != nil {
@@ -192,7 +195,7 @@ func (h *handler) getUserBalance(w http.ResponseWriter, r *http.Request) {
 func (h *handler) withdraw(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userID := r.Context().Value(middleware.KeyUserID{}).(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(int64)
 
 	withdrawal := &models.Withdrawal{}
 	err := json.NewDecoder(r.Body).Decode(withdrawal)
@@ -225,7 +228,7 @@ func (h *handler) withdraw(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getWithdrawals(w http.ResponseWriter, r *http.Request) {
 	entry := logEntry(h.log, r)
 
-	userID := r.Context().Value(middleware.KeyUserID{}).(string)
+	userID := r.Context().Value(middleware.KeyUserID{}).(int64)
 
 	withdrawals, err := h.users.GetWithdrawals(r.Context(), userID)
 	if err != nil {

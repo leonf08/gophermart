@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/leonf08/gophermart.git/internal/controller/http/handlers/middleware"
 	"github.com/leonf08/gophermart.git/internal/models"
 	"github.com/leonf08/gophermart.git/internal/services"
@@ -40,12 +42,12 @@ func Test_handler_getOrders(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userID string
+		userID int64
 		want   want
 	}{
 		{
 			name:   "1. get orders success",
-			userID: "user",
+			userID: 1,
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -53,7 +55,7 @@ func Test_handler_getOrders(t *testing.T) {
 		},
 		{
 			name:   "2. get orders, no content",
-			userID: "admin",
+			userID: 2,
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				status:      http.StatusNoContent,
@@ -70,15 +72,15 @@ func Test_handler_getOrders(t *testing.T) {
 
 	orders.
 		On("GetOrdersForUser", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) ([]*models.Order, error) {
-			if userID == "user" {
+		Return(func(ctx context.Context, userID int64) ([]*models.Order, error) {
+			if userID == 1 {
 				return []*models.Order{
 					{
 						Number:     "123456789",
 						UploadedAt: time.Now(),
 					},
 				}, nil
-			} else if userID == "admin" {
+			} else if userID == 2 {
 				return []*models.Order{}, nil
 			}
 
@@ -117,12 +119,12 @@ func Test_handler_getUserBalance(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userID string
+		userID int64
 		want   want
 	}{
 		{
 			name:   "1. get user balance success",
-			userID: "user",
+			userID: 1,
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -139,8 +141,8 @@ func Test_handler_getUserBalance(t *testing.T) {
 
 	users.
 		On("GetUserAccount", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) (*models.UserAccount, error) {
-			if userID == "user" {
+		Return(func(ctx context.Context, userID int64) (*models.UserAccount, error) {
+			if userID == 1 {
 				return &models.UserAccount{
 					Current:   100,
 					Withdrawn: 0,
@@ -182,12 +184,12 @@ func Test_handler_getWithdrawals(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userID string
+		userID int64
 		want   want
 	}{
 		{
 			name:   "1. get withdrawals success",
-			userID: "user",
+			userID: 1,
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -195,7 +197,7 @@ func Test_handler_getWithdrawals(t *testing.T) {
 		},
 		{
 			name:   "2. get withdrawals, no content",
-			userID: "admin",
+			userID: 2,
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				status:      http.StatusNoContent,
@@ -212,8 +214,8 @@ func Test_handler_getWithdrawals(t *testing.T) {
 
 	users.
 		On("GetWithdrawals", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
-			if userID == "user" {
+		Return(func(ctx context.Context, userID int64) ([]*models.Withdrawal, error) {
+			if userID == 1 {
 				return []*models.Withdrawal{
 					{
 						OrderNumber: "123456789",
@@ -221,7 +223,7 @@ func Test_handler_getWithdrawals(t *testing.T) {
 						ProcessedAt: time.Now(),
 					},
 				}, nil
-			} else if userID == "admin" {
+			} else if userID == 2 {
 				return []*models.Withdrawal{}, nil
 			}
 
@@ -308,7 +310,7 @@ func Test_handler_uploadOrder(t *testing.T) {
 
 	orders.
 		On("CreateNewOrder", mock.Anything, mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID, orderNum string) error {
+		Return(func(ctx context.Context, userID int64, orderNum string) error {
 			if orderNum == "1234567" {
 				return services.ErrOrderAlreadyExists
 			} else if orderNum == "12345678" {
@@ -328,7 +330,7 @@ func Test_handler_uploadOrder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
-			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, "user")))
+			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, int64(1))))
 
 			orders.AssertExpectations(t)
 
@@ -481,7 +483,7 @@ func Test_handler_userSignUp(t *testing.T) {
 		On("RegisterUser", mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, user *models.User) error {
 			if user.Login == "user" {
-				return services.ErrUserAlreadyExists
+				return &pgconn.PgError{Code: pgerrcode.UniqueViolation}
 			} else if user.Login == "admin" {
 				return errors.New("internal server error")
 			}
@@ -528,13 +530,13 @@ func Test_handler_withdraw(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userID string
+		userID int64
 		body   string
 		want   want
 	}{
 		{
 			name:   "1. withdraw success",
-			userID: "user",
+			userID: 1,
 			body:   `{"order":"123456789","sum":100}`,
 			want: want{
 				status: http.StatusOK,
@@ -542,7 +544,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "2. withdraw fail, insufficient funds",
-			userID: "user",
+			userID: 2,
 			body:   `{"order":"123456789","sum":1000}`,
 			want: want{
 				status: http.StatusPaymentRequired,
@@ -550,7 +552,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "3. withdraw fail, invalid order number",
-			userID: "user",
+			userID: 2,
 			body:   `{"order":"12345678dfg","sum":100}`,
 			want: want{
 				status: http.StatusBadRequest,
@@ -558,22 +560,23 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "4. withdraw fail, invalid order number format",
-			userID: "user",
+			userID: 2,
 			body:   `{"order":"1","sum":100}`,
 			want: want{
 				status: http.StatusUnprocessableEntity,
 			},
 		},
 		{
-			name: "5. withdraw fail, internal server error",
-			body: `{"order":"123456789","sum":100}`,
+			name:   "5. withdraw fail, internal server error",
+			userID: 0,
+			body:   `{"order":"123456789","sum":100}`,
 			want: want{
 				status: http.StatusInternalServerError,
 			},
 		},
 		{
 			name:   "6. withdraw fail, bad request",
-			userID: "user",
+			userID: 2,
 			want: want{
 				status: http.StatusBadRequest,
 			},
@@ -589,7 +592,7 @@ func Test_handler_withdraw(t *testing.T) {
 				return services.ErrInvalidOrderNumber
 			} else if withdrawal.OrderNumber == "1" {
 				return services.ErrInvalidOrderNumberFormat
-			} else if withdrawal.UserID == "" {
+			} else if withdrawal.UserID == 0 {
 				return errors.New("internal server error")
 			}
 

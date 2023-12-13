@@ -15,11 +15,11 @@ type Orders struct {
 }
 
 // CreateNewOrder provides a mock function with given fields: ctx, userID, orderNum
-func (_m *Orders) CreateNewOrder(ctx context.Context, userID string, orderNum string) error {
+func (_m *Orders) CreateNewOrder(ctx context.Context, userID int64, orderNum string) error {
 	ret := _m.Called(ctx, userID, orderNum)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
 		r0 = rf(ctx, userID, orderNum)
 	} else {
 		r0 = ret.Error(0)
@@ -29,15 +29,15 @@ func (_m *Orders) CreateNewOrder(ctx context.Context, userID string, orderNum st
 }
 
 // GetOrdersForUser provides a mock function with given fields: ctx, userID
-func (_m *Orders) GetOrdersForUser(ctx context.Context, userID string) ([]*models.Order, error) {
+func (_m *Orders) GetOrdersForUser(ctx context.Context, userID int64) ([]*models.Order, error) {
 	ret := _m.Called(ctx, userID)
 
 	var r0 []*models.Order
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*models.Order, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]*models.Order, error)); ok {
 		return rf(ctx, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*models.Order); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []*models.Order); ok {
 		r0 = rf(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
@@ -45,7 +45,7 @@ func (_m *Orders) GetOrdersForUser(ctx context.Context, userID string) ([]*model
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, userID)
 	} else {
 		r1 = ret.Error(1)

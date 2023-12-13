@@ -13,7 +13,7 @@ import (
 
 type mockAccrual struct{}
 
-func (m *mockAccrual) SendOrderAccrual(orderNum string) {}
+func (m *mockAccrual) SendOrderAccrual(_ string) {}
 
 func TestNewOrderManager(t *testing.T) {
 	type args struct {
@@ -62,7 +62,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 	accr := &mockAccrual{}
 
 	type args struct {
-		userID   string
+		userID   int64
 		orderNum string
 	}
 	type want struct {
@@ -76,7 +76,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 		{
 			name: "CreateNewOrder_no_error",
 			args: args{
-				userID:   "1",
+				userID:   1,
 				orderNum: "2030",
 			},
 			want: want{
@@ -86,7 +86,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 		{
 			name: "CreateNewOrder_invalid_order_number",
 			args: args{
-				userID:   "1",
+				userID:   1,
 				orderNum: "2030a",
 			},
 			want: want{
@@ -96,7 +96,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 		{
 			name: "CreateNewOrder_invalid_order_number_format",
 			args: args{
-				userID:   "1",
+				userID:   1,
 				orderNum: "2040",
 			},
 			want: want{
@@ -106,7 +106,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 		{
 			name: "CreateNewOrder_order_already_exists_for_user",
 			args: args{
-				userID:   "1",
+				userID:   1,
 				orderNum: "4010",
 			},
 			want: want{
@@ -116,7 +116,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 		{
 			name: "CreateNewOrder_order_already_exists",
 			args: args{
-				userID:   "2",
+				userID:   2,
 				orderNum: "4010",
 			},
 			want: want{
@@ -126,7 +126,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 		{
 			name: "CreateNewOrder_error",
 			args: args{
-				userID:   "2",
+				userID:   2,
 				orderNum: "2030",
 			},
 			want: want{
@@ -144,7 +144,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 
 			if num == "4010" {
 				return &models.Order{
-					UserID: "1",
+					UserID: 1,
 				}, nil
 			}
 
@@ -154,7 +154,7 @@ func TestOrderManager_CreateNewOrder(t *testing.T) {
 	repo.
 		On("CreateOrder", context.Background(), mock.Anything).
 		Return(func(ctx context.Context, order models.Order) error {
-			if order.UserID == "2" {
+			if order.UserID == 2 {
 				return errors.New("error")
 			}
 
@@ -179,7 +179,7 @@ func TestOrderManager_GetOrdersForUser(t *testing.T) {
 	accr := &mockAccrual{}
 
 	type args struct {
-		userID string
+		userID int64
 	}
 	type want struct {
 		orders []*models.Order
@@ -193,12 +193,12 @@ func TestOrderManager_GetOrdersForUser(t *testing.T) {
 		{
 			name: "GetOrdersForUser_no_error",
 			args: args{
-				userID: "1",
+				userID: 1,
 			},
 			want: want{
 				orders: []*models.Order{
 					{
-						UserID: "1",
+						UserID: 1,
 					},
 				},
 				err: false,
@@ -207,7 +207,7 @@ func TestOrderManager_GetOrdersForUser(t *testing.T) {
 		{
 			name: "GetOrdersForUser_error",
 			args: args{
-				userID: "2",
+				userID: 2,
 			},
 			want: want{
 				orders: nil,
@@ -218,11 +218,11 @@ func TestOrderManager_GetOrdersForUser(t *testing.T) {
 
 	repo.
 		On("GetOrderList", context.Background(), mock.Anything).
-		Return(func(ctx context.Context, userID string) ([]*models.Order, error) {
-			if userID == "1" {
+		Return(func(ctx context.Context, userID int64) ([]*models.Order, error) {
+			if userID == 1 {
 				return []*models.Order{
 					{
-						UserID: "1",
+						UserID: 1,
 					},
 				}, nil
 			}

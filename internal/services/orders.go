@@ -24,7 +24,7 @@ func NewOrderManager(repo OrderRepo, accrual Accrual) *OrderManager {
 // CreateNewOrder creates a new order.
 // If the order creation fails, an error is returned.
 // If the order creation succeeds, nil is returned.
-func (o *OrderManager) CreateNewOrder(ctx context.Context, userID, orderNum string) error {
+func (o *OrderManager) CreateNewOrder(ctx context.Context, userID int64, orderNum string) error {
 	// Check if the order number is valid.
 	if !utils.IsNumber(orderNum) {
 		return ErrInvalidOrderNumber
@@ -64,7 +64,7 @@ func (o *OrderManager) CreateNewOrder(ctx context.Context, userID, orderNum stri
 // GetOrdersForUser returns all orders for a given user.
 // If the order retrieval fails, an error is returned.
 // If the order retrieval succeeds, the orders are returned.
-func (o *OrderManager) GetOrdersForUser(ctx context.Context, userID string) ([]*models.Order, error) {
+func (o *OrderManager) GetOrdersForUser(ctx context.Context, userID int64) ([]*models.Order, error) {
 	// Retrieve orders.
 	orders, err := o.repo.GetOrderList(ctx, userID)
 	if err != nil {

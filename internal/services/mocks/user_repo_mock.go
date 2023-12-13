@@ -28,27 +28,13 @@ func (_m *UserRepo) CreateUser(ctx context.Context, login string, hashedPasswd s
 	return r0
 }
 
-// CreateUserAccount provides a mock function with given fields: ctx, userID
-func (_m *UserRepo) CreateUserAccount(ctx context.Context, userID string) error {
-	ret := _m.Called(ctx, userID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DoWithdrawal provides a mock function with given fields: ctx, withdrawal
-func (_m *UserRepo) DoWithdrawal(ctx context.Context, withdrawal *models.Withdrawal) error {
-	ret := _m.Called(ctx, withdrawal)
+// DoWithdrawal provides a mock function with given fields: ctx, w
+func (_m *UserRepo) DoWithdrawal(ctx context.Context, w *models.Withdrawal) error {
+	ret := _m.Called(ctx, w)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *models.Withdrawal) error); ok {
-		r0 = rf(ctx, withdrawal)
+		r0 = rf(ctx, w)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -57,15 +43,15 @@ func (_m *UserRepo) DoWithdrawal(ctx context.Context, withdrawal *models.Withdra
 }
 
 // GetUserAccount provides a mock function with given fields: ctx, userID
-func (_m *UserRepo) GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error) {
+func (_m *UserRepo) GetUserAccount(ctx context.Context, userID int64) (*models.UserAccount, error) {
 	ret := _m.Called(ctx, userID)
 
 	var r0 *models.UserAccount
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.UserAccount, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (*models.UserAccount, error)); ok {
 		return rf(ctx, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.UserAccount); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *models.UserAccount); ok {
 		r0 = rf(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
@@ -73,7 +59,7 @@ func (_m *UserRepo) GetUserAccount(ctx context.Context, userID string) (*models.
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, userID)
 	} else {
 		r1 = ret.Error(1)
@@ -108,40 +94,16 @@ func (_m *UserRepo) GetUserByLogin(ctx context.Context, login string) (*models.U
 	return r0, r1
 }
 
-// GetUserID provides a mock function with given fields: ctx, login
-func (_m *UserRepo) GetUserID(ctx context.Context, login string) (string, error) {
-	ret := _m.Called(ctx, login)
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return rf(ctx, login)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = rf(ctx, login)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, login)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetWithdrawalList provides a mock function with given fields: ctx, userID
-func (_m *UserRepo) GetWithdrawalList(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
+func (_m *UserRepo) GetWithdrawalList(ctx context.Context, userID int64) ([]*models.Withdrawal, error) {
 	ret := _m.Called(ctx, userID)
 
 	var r0 []*models.Withdrawal
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*models.Withdrawal, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]*models.Withdrawal, error)); ok {
 		return rf(ctx, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*models.Withdrawal); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []*models.Withdrawal); ok {
 		r0 = rf(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
@@ -149,27 +111,13 @@ func (_m *UserRepo) GetWithdrawalList(ctx context.Context, userID string) ([]*mo
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
-}
-
-// UpdateUserAccount provides a mock function with given fields: ctx, userAccount
-func (_m *UserRepo) UpdateUserAccount(ctx context.Context, userAccount *models.UserAccount) error {
-	ret := _m.Called(ctx, userAccount)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.UserAccount) error); ok {
-		r0 = rf(ctx, userAccount)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // NewUserRepo creates a new instance of UserRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

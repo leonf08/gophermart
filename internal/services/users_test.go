@@ -120,7 +120,7 @@ func TestUserManager_GetUserAccount(t *testing.T) {
 	auth := mocks.NewAuthenticator(t)
 
 	type args struct {
-		userID string
+		userID int64
 	}
 	type want struct {
 		userAccount *models.UserAccount
@@ -134,11 +134,11 @@ func TestUserManager_GetUserAccount(t *testing.T) {
 		{
 			name: "TestUserManager_GetUserAccount_no_error",
 			args: args{
-				userID: "test",
+				userID: 1,
 			},
 			want: want{
 				userAccount: &models.UserAccount{
-					UserID: "test",
+					UserID: 1,
 				},
 				err: false,
 			},
@@ -146,7 +146,7 @@ func TestUserManager_GetUserAccount(t *testing.T) {
 		{
 			name: "TestUserManager_GetUserAccount_error",
 			args: args{
-				userID: "user",
+				userID: 2,
 			},
 			want: want{
 				userAccount: nil,
@@ -157,8 +157,8 @@ func TestUserManager_GetUserAccount(t *testing.T) {
 
 	repo.
 		On("GetUserAccount", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) (*models.UserAccount, error) {
-			if userID != "test" {
+		Return(func(ctx context.Context, userID int64) (*models.UserAccount, error) {
+			if userID != 1 {
 				return nil, errors.New("error")
 			}
 
@@ -186,7 +186,7 @@ func TestUserManager_GetWithdrawals(t *testing.T) {
 	auth := mocks.NewAuthenticator(t)
 
 	type args struct {
-		userID string
+		userID int64
 	}
 	type want struct {
 		withdrawals []*models.Withdrawal
@@ -200,12 +200,12 @@ func TestUserManager_GetWithdrawals(t *testing.T) {
 		{
 			name: "TestUserManager_GetWithdrawals_no_error",
 			args: args{
-				userID: "test",
+				userID: 1,
 			},
 			want: want{
 				withdrawals: []*models.Withdrawal{
 					{
-						UserID: "test",
+						UserID: 1,
 					},
 				},
 				err: false,
@@ -214,7 +214,7 @@ func TestUserManager_GetWithdrawals(t *testing.T) {
 		{
 			name: "TestUserManager_GetWithdrawals_error",
 			args: args{
-				userID: "user",
+				userID: 2,
 			},
 			want: want{
 				withdrawals: nil,
@@ -225,8 +225,8 @@ func TestUserManager_GetWithdrawals(t *testing.T) {
 
 	repo.
 		On("GetWithdrawalList", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
-			if userID != "test" {
+		Return(func(ctx context.Context, userID int64) ([]*models.Withdrawal, error) {
+			if userID != 1 {
 				return nil, errors.New("error")
 			}
 
@@ -378,18 +378,6 @@ func TestUserManager_RegisterUser(t *testing.T) {
 			},
 		},
 		{
-			name: "TestUserManager_RegisterUser_user_already_exists",
-			args: args{
-				user: &models.User{
-					Login:    "user",
-					Password: "test",
-				},
-			},
-			want: want{
-				err: ErrUserAlreadyExists,
-			},
-		},
-		{
 			name: "TestUserManager_RegisterUser_generate_hash_from_password_error",
 			args: args{
 				user: &models.User{
@@ -413,43 +401,7 @@ func TestUserManager_RegisterUser(t *testing.T) {
 				err: errors.New("error"),
 			},
 		},
-		{
-			name: "TestUserManager_RegisterUser_get_user_id_error",
-			args: args{
-				user: &models.User{
-					Login:    "test2",
-					Password: "test",
-				},
-			},
-			want: want{
-				err: errors.New("error"),
-			},
-		},
-		{
-			name: "TestUserManager_RegisterUser_create_user_account_error",
-			args: args{
-				user: &models.User{
-					Login:    "test3",
-					Password: "test",
-				},
-			},
-			want: want{
-				err: errors.New("error"),
-			},
-		},
 	}
-
-	repo.
-		On("GetUserByLogin", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, login string) (*models.User, error) {
-			if login == "user" {
-				return &models.User{
-					Login: login,
-				}, nil
-			}
-
-			return nil, ErrUserNotFound
-		})
 
 	repo.
 		On("CreateUser", mock.Anything, mock.Anything, mock.Anything).
@@ -459,26 +411,6 @@ func TestUserManager_RegisterUser(t *testing.T) {
 			}
 
 			return nil
-		})
-
-	repo.
-		On("CreateUserAccount", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) error {
-			if userID == "test3" {
-				return errors.New("error")
-			}
-
-			return nil
-		})
-
-	repo.
-		On("GetUserID", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, login string) (string, error) {
-			if login == "test2" {
-				return "", errors.New("error")
-			}
-
-			return login, nil
 		})
 
 	auth.
@@ -524,7 +456,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 			name: "TestUserManager_WithdrawFromAccount_no_error",
 			args: args{
 				w: &models.Withdrawal{
-					UserID:      "test",
+					UserID:      1,
 					Sum:         1,
 					OrderNumber: "2030",
 				},
@@ -537,7 +469,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 			name: "TestUserManager_WithdrawFromAccount_invalid_order_number_format",
 			args: args{
 				w: &models.Withdrawal{
-					UserID:      "user",
+					UserID:      2,
 					Sum:         1,
 					OrderNumber: "test",
 				},
@@ -550,7 +482,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 			name: "TestUserManager_WithdrawFromAccount_invalid_order_number",
 			args: args{
 				w: &models.Withdrawal{
-					UserID:      "user",
+					UserID:      2,
 					Sum:         1,
 					OrderNumber: "2031",
 				},
@@ -563,7 +495,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 			name: "TestUserManager_WithdrawFromAccount_insufficient_funds",
 			args: args{
 				w: &models.Withdrawal{
-					UserID:      "user",
+					UserID:      2,
 					Sum:         100000,
 					OrderNumber: "2030",
 				},
@@ -576,7 +508,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 			name: "TestUserManager_WithdrawFromAccount_get_user_account_error",
 			args: args{
 				w: &models.Withdrawal{
-					UserID:      "admin",
+					UserID:      3,
 					Sum:         1,
 					OrderNumber: "2030",
 				},
@@ -589,20 +521,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 			name: "TestUserManager_WithdrawFromAccount_do_withdrawal_error",
 			args: args{
 				w: &models.Withdrawal{
-					UserID:      "user",
-					Sum:         1,
-					OrderNumber: "2030",
-				},
-			},
-			want: want{
-				err: errors.New("error"),
-			},
-		},
-		{
-			name: "TestUserManager_WithdrawFromAccount_update_user_account_error",
-			args: args{
-				w: &models.Withdrawal{
-					UserID:      "test2",
+					UserID:      2,
 					Sum:         1,
 					OrderNumber: "2030",
 				},
@@ -615,8 +534,8 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 
 	repo.
 		On("GetUserAccount", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userID string) (*models.UserAccount, error) {
-			if userID == "admin" {
+		Return(func(ctx context.Context, userID int64) (*models.UserAccount, error) {
+			if userID == 3 {
 				return nil, errors.New("error")
 			}
 
@@ -629,17 +548,7 @@ func TestUserManager_WithdrawFromAccount(t *testing.T) {
 	repo.
 		On("DoWithdrawal", mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, withdrawal *models.Withdrawal) error {
-			if withdrawal.UserID == "user" {
-				return errors.New("error")
-			}
-
-			return nil
-		})
-
-	repo.
-		On("UpdateUserAccount", mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, userAccount *models.UserAccount) error {
-			if userAccount.UserID == "test2" {
+			if withdrawal.UserID == 2 {
 				return errors.New("error")
 			}
 

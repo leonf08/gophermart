@@ -81,16 +81,6 @@ func (a *AccrualService) process(ctx context.Context, orderNum string) error {
 			if err = a.repo.UpdateOrder(ctx, order); err != nil {
 				return err
 			}
-
-			userAccount, err := a.repo.GetUserAccount(ctx, order.UserID)
-			if err != nil {
-				return err
-			}
-
-			userAccount.Current += accrualResp.Accrual * 100
-			if err = a.repo.UpdateUserAccount(ctx, userAccount); err != nil {
-				return err
-			}
 		case models.OrderStatusProcessing:
 			if err = a.repo.UpdateOrder(ctx, &models.Order{
 				Number: orderNum,

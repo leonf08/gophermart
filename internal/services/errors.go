@@ -14,7 +14,6 @@ var (
 	ErrGenerateHashFromPassword = errors.New("failed to generate hash from password")
 	ErrIncorrectPassword        = errors.New("incorrect password")
 
-	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrUserNotFound       = errors.New("user not found")
 	ErrInvalidLoginFormat = errors.New("invalid login format")
 	ErrInsufficientFunds  = errors.New("insufficient funds")

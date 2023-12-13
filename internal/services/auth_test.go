@@ -113,7 +113,7 @@ func TestAuthenticatorService_GenerateToken(t *testing.T) {
 			},
 			args: args{
 				user: &models.User{
-					UserID: "1",
+					UserID: 1,
 				},
 			},
 			wantErr: assert.NoError,
@@ -134,7 +134,7 @@ func TestAuthenticatorService_GenerateToken(t *testing.T) {
 
 func TestAuthenticatorService_ValidateTokenAndExtractClaims(t *testing.T) {
 	claims := &models.CustomJWTClaims{
-		UserID: "1",
+		UserID: 1,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

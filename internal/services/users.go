@@ -24,12 +24,6 @@ func NewUserManager(repo UserRepo, auth Authenticator) *UserManager {
 // If the user registration succeeds, nil is returned.
 // The user registration fails if the user already exists.
 func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error {
-	// Check if the user already exists.
-	_, err := u.repo.GetUserByLogin(ctx, user.Login)
-	if err == nil {
-		return ErrUserAlreadyExists
-	}
-
 	// Generate hash from password.
 	hashedPasswd, err := u.auth.GenerateHashFromPassword(user)
 	if err != nil {
@@ -40,19 +34,6 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 	if err = u.repo.CreateUser(ctx, user.Login, hashedPasswd); err != nil {
 		return err
 	}
-
-	// Get user id.
-	userID, err := u.repo.GetUserID(ctx, user.Login)
-	if err != nil {
-		return err
-	}
-
-	// Create user account.
-	if err = u.repo.CreateUserAccount(ctx, userID); err != nil {
-		return err
-	}
-
-	user.UserID = userID
 
 	return nil
 }
@@ -98,10 +79,10 @@ func (u *UserManager) GetToken(user *models.User) (string, error) {
 	return token, nil
 }
 
-// GetUserAccount returns a user account.
+// GetUserAccount returns details about user account.
 // If the user account is found, it returns the user account and nil.
 // If the user account is not found, it returns nil and an error.
-func (u *UserManager) GetUserAccount(ctx context.Context, userID string) (*models.UserAccount, error) {
+func (u *UserManager) GetUserAccount(ctx context.Context, userID int64) (*models.UserAccount, error) {
 	userAccount, err := u.repo.GetUserAccount(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -149,21 +130,13 @@ func (u *UserManager) WithdrawFromAccount(ctx context.Context, w *models.Withdra
 		return err
 	}
 
-	// Update user account.
-	userAccount.Current -= w.Sum
-	userAccount.Withdrawn += w.Sum
-	err = u.repo.UpdateUserAccount(ctx, userAccount)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // GetWithdrawals returns a list of withdrawals.
 // If the list of withdrawals is found, it returns the list of withdrawals and nil.
 // If the list of withdrawals is not found, it returns nil and an error.
-func (u *UserManager) GetWithdrawals(ctx context.Context, userID string) ([]*models.Withdrawal, error) {
+func (u *UserManager) GetWithdrawals(ctx context.Context, userID int64) ([]*models.Withdrawal, error) {
 	withdrawals, err := u.repo.GetWithdrawalList(ctx, userID)
 	if err != nil {
 		return nil, err
