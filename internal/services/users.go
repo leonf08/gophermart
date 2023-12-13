@@ -31,9 +31,12 @@ func (u *UserManager) RegisterUser(ctx context.Context, user *models.User) error
 	}
 
 	// Create user.
-	if err = u.repo.CreateUser(ctx, user.Login, hashedPasswd); err != nil {
+	userID, err := u.repo.CreateUser(ctx, user.Login, hashedPasswd)
+	if err != nil {
 		return err
 	}
+
+	user.UserID = userID
 
 	return nil
 }

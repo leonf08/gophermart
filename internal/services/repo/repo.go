@@ -19,22 +19,27 @@ func NewRepository(db *sqlx.DB) *Repository {
 // CreateUser creates a new user in database.
 // If user creation fails, returns error.
 // If user creation succeeds, returns nil.
-func (r *Repository) CreateUser(ctx context.Context, login, hashedPasswd string) error {
-	query := `INSERT INTO users (login, password) VALUES ($1, $2)`
+func (r *Repository) CreateUser(ctx context.Context, login, hashedPasswd string) (int64, error) {
+	query := `INSERT INTO users (login, password) VALUES ($1, $2) RETURNING user_id`
 
-	_, err := r.db.ExecContext(ctx, query, login, hashedPasswd)
+	res, err := r.db.ExecContext(ctx, query, login, hashedPasswd)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	userID, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return userID, nil
 }
 
 // GetUserByLogin gets a user from database by login.
 // If user does not exist, returns error.
 // If user exists, returns nil.
 func (r *Repository) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
-	query := `SELECT * FROM users WHERE login = $1`
+	query := `SELECT user_id, login, password FROM users WHERE login = $1`
 	user := &models.User{}
 	err := r.db.GetContext(ctx, user, query, login)
 	if err != nil {
@@ -48,7 +53,7 @@ func (r *Repository) GetUserByLogin(ctx context.Context, login string) (*models.
 // If user account does not exist, returns error.
 // If user account exists, returns nil.
 func (r *Repository) GetUserAccount(ctx context.Context, userID int64) (*models.UserAccount, error) {
-	query := `SELECT * FROM users WHERE user_id = $1`
+	query := `SELECT user_id, current, withdrawn FROM users WHERE user_id = $1`
 	userAcc := &models.UserAccount{}
 	err := r.db.GetContext(ctx, userAcc, query, userID)
 	if err != nil {

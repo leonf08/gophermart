@@ -1,6 +1,6 @@
 begin transaction;
 
-create type order_status as enum ('new', 'registered', 'processing', 'processed', 'invalid');
+create type order_status as enum ('NEW', 'REGISTERED', 'PROCESSING', 'PROCESSED', 'INVALID');
 
 create table if not exists users (
     user_id bigserial primary key,

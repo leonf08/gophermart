@@ -15,7 +15,7 @@ type UserRepo struct {
 }
 
 // CreateUser provides a mock function with given fields: ctx, login, hashedPasswd
-func (_m *UserRepo) CreateUser(ctx context.Context, login string, hashedPasswd string) error {
+func (_m *UserRepo) CreateUser(ctx context.Context, login, hashedPasswd string) (int64, error) {
 	ret := _m.Called(ctx, login, hashedPasswd)
 
 	var r0 error
@@ -25,7 +25,7 @@ func (_m *UserRepo) CreateUser(ctx context.Context, login string, hashedPasswd s
 		r0 = ret.Error(0)
 	}
 
-	return r0
+	return 0, r0
 }
 
 // DoWithdrawal provides a mock function with given fields: ctx, w

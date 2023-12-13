@@ -13,7 +13,7 @@ import (
 type (
 	// UserRepo is an interface for working with the user repository.
 	UserRepo interface {
-		CreateUser(ctx context.Context, login, hashedPasswd string) error
+		CreateUser(ctx context.Context, login, hashedPasswd string) (int64, error)
 		GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 		GetUserAccount(ctx context.Context, userID int64) (*models.UserAccount, error)
 		DoWithdrawal(ctx context.Context, w *models.Withdrawal) error
