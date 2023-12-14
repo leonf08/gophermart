@@ -22,17 +22,10 @@ func NewRepository(db *sqlx.DB) *Repository {
 func (r *Repository) CreateUser(ctx context.Context, login, hashedPasswd string) (int64, error) {
 	query := `INSERT INTO users (login, password) VALUES ($1, $2) RETURNING user_id`
 
-	res, err := r.db.ExecContext(ctx, query, login, hashedPasswd)
-	if err != nil {
-		return 0, err
-	}
+	var userID int64
+	err := r.db.QueryRowContext(ctx, query, login, hashedPasswd).Scan(&userID)
 
-	userID, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return userID, nil
+	return userID, err
 }
 
 // GetUserByLogin gets a user from database by login.
