@@ -10,7 +10,7 @@ create table if not exists users (
     withdrawn integer default 0
 );
 
-create index if not exists users_login_idx on users(user_id, login);
+create index if not exists users_login_idx on users(login);
 
 create table if not exists orders (
     number varchar(255) primary key,
@@ -19,8 +19,6 @@ create table if not exists orders (
     accrual integer default 0,
     created_at timestamp not null
 );
-
-create index if not exists orders_number_idx on orders(number);
 
 create table if not exists withdrawals (
     user_id bigint not null references users(user_id),
