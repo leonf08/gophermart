@@ -30,7 +30,7 @@ import (
 	"github.com/leonf08/gophermart.git/internal/models"
 )
 
-// swagger:route POST /register/ auth userSignUp
+// swagger:route POST /register auth userSignUp
 // Register a new user.
 // consumes:
 // - application/json
@@ -40,7 +40,7 @@ import (
 //   409: errorResponse
 //   500: errorResponse
 
-// swagger:route POST /login/ auth userLogIn
+// swagger:route POST /login auth userLogIn
 // Log in a user.
 // consumes:
 // - application/json
@@ -50,7 +50,7 @@ import (
 //   401: errorResponse
 //   500: errorResponse
 
-// swagger:route POST /orders/ orders uploadOrder
+// swagger:route POST /orders orders uploadOrder
 // Upload an order.
 // consumes:
 // - text/plain
@@ -65,7 +65,7 @@ import (
 //   422: errorResponse
 //   500: errorResponse
 
-// swagger:route GET /orders/ orders getOrders
+// swagger:route GET /orders orders getOrders
 // Get orders.
 // security:
 //   api_key:
@@ -75,7 +75,7 @@ import (
 //   401: errorResponse
 //   500: errorResponse
 
-// swagger:route GET /balance/ balance getUserBalance
+// swagger:route GET /balance balance getUserBalance
 // Get user balance.
 // security:
 //   api_key:
@@ -84,7 +84,7 @@ import (
 //   401: errorResponse
 //   500: errorResponse
 
-// swagger:route POST /balance/withdraw/ balance withdraw
+// swagger:route POST /balance/withdraw balance withdraw
 // Withdraw money from the user balance.
 // consumes:
 // - application/json
@@ -98,7 +98,7 @@ import (
 //   422: errorResponse
 //   500: errorResponse
 
-// swagger:route GET /withdrawals/ balance getWithdrawals
+// swagger:route GET /withdrawals balance getWithdrawals
 // Get withdrawals.
 // security:
 //   api_key:

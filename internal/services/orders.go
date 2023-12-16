@@ -24,7 +24,7 @@ func NewOrderManager(repo OrderRepo, accrual Accrual) *OrderManager {
 // CreateNewOrder creates a new order.
 // If the order creation fails, an error is returned.
 // If the order creation succeeds, nil is returned.
-func (o *OrderManager) CreateNewOrder(ctx context.Context, userId, orderNum string) error {
+func (o *OrderManager) CreateNewOrder(ctx context.Context, userID int64, orderNum string) error {
 	// Check if the order number is valid.
 	if !utils.IsNumber(orderNum) {
 		return ErrInvalidOrderNumber
@@ -38,7 +38,7 @@ func (o *OrderManager) CreateNewOrder(ctx context.Context, userId, orderNum stri
 	// Check if the order already exists.
 	order, err := o.repo.GetOrderByNumber(ctx, orderNum)
 	if err == nil {
-		if order.UserID == userId {
+		if order.UserID == userID {
 			return ErrOrderAlreadyExistsForUser
 		}
 		return ErrOrderAlreadyExists
@@ -46,7 +46,7 @@ func (o *OrderManager) CreateNewOrder(ctx context.Context, userId, orderNum stri
 
 	// Create order.
 	err = o.repo.CreateOrder(ctx, models.Order{
-		UserID:     userId,
+		UserID:     userID,
 		Number:     orderNum,
 		Status:     models.OrderStatusNew,
 		UploadedAt: time.Now(),
@@ -64,9 +64,9 @@ func (o *OrderManager) CreateNewOrder(ctx context.Context, userId, orderNum stri
 // GetOrdersForUser returns all orders for a given user.
 // If the order retrieval fails, an error is returned.
 // If the order retrieval succeeds, the orders are returned.
-func (o *OrderManager) GetOrdersForUser(ctx context.Context, userId string) ([]*models.Order, error) {
+func (o *OrderManager) GetOrdersForUser(ctx context.Context, userID int64) ([]*models.Order, error) {
 	// Retrieve orders.
-	orders, err := o.repo.GetOrderList(ctx, userId)
+	orders, err := o.repo.GetOrderList(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

@@ -29,3 +29,7 @@ func LuhnValidate(s string) bool {
 
 	return sum%10 == 0
 }
+
+func IsLoginValid(login string) bool {
+	return len(login) > 0
+}

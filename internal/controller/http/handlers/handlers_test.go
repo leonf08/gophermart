@@ -3,6 +3,9 @@ package handlers
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/leonf08/gophermart.git/internal/controller/http/handlers/middleware"
 	"github.com/leonf08/gophermart.git/internal/models"
 	"github.com/leonf08/gophermart.git/internal/services"
 	"github.com/leonf08/gophermart.git/internal/services/mocks"
@@ -39,12 +42,12 @@ func Test_handler_getOrders(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID int64
 		want   want
 	}{
 		{
 			name:   "1. get orders success",
-			userId: "user",
+			userID: 1,
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -52,7 +55,7 @@ func Test_handler_getOrders(t *testing.T) {
 		},
 		{
 			name:   "2. get orders, no content",
-			userId: "admin",
+			userID: 2,
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				status:      http.StatusNoContent,
@@ -67,28 +70,28 @@ func Test_handler_getOrders(t *testing.T) {
 		},
 	}
 
+	orders.
+		On("GetOrdersForUser", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID int64) ([]*models.Order, error) {
+			if userID == 1 {
+				return []*models.Order{
+					{
+						Number:     "123456789",
+						UploadedAt: time.Now(),
+					},
+				}, nil
+			} else if userID == 2 {
+				return []*models.Order{}, nil
+			}
+
+			return nil, errors.New("internal server error")
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orders.
-				On("GetOrdersForUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId string) ([]*models.Order, error) {
-					if userId == "user" {
-						return []*models.Order{
-							{
-								Number:     "123456789",
-								UploadedAt: time.Now(),
-							},
-						}, nil
-					} else if userId == "admin" {
-						return []*models.Order{}, nil
-					}
-
-					return nil, errors.New("internal server error")
-				})
-
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			h.getOrders(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.getOrders(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			orders.AssertExpectations(t)
 
@@ -116,12 +119,12 @@ func Test_handler_getUserBalance(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID int64
 		want   want
 	}{
 		{
 			name:   "1. get user balance success",
-			userId: "user",
+			userID: 1,
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -136,24 +139,24 @@ func Test_handler_getUserBalance(t *testing.T) {
 		},
 	}
 
+	users.
+		On("GetUserAccount", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID int64) (*models.UserAccount, error) {
+			if userID == 1 {
+				return &models.UserAccount{
+					Current:   100,
+					Withdrawn: 0,
+				}, nil
+			}
+
+			return nil, errors.New("internal server error")
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("GetUserAccount", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId string) (*models.UserAccount, error) {
-					if userId == "user" {
-						return &models.UserAccount{
-							Current:   100,
-							Withdrawn: 0,
-						}, nil
-					}
-
-					return nil, errors.New("internal server error")
-				})
-
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			h.getUserBalance(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.getUserBalance(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			users.AssertExpectations(t)
 
@@ -181,12 +184,12 @@ func Test_handler_getWithdrawals(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID int64
 		want   want
 	}{
 		{
 			name:   "1. get withdrawals success",
-			userId: "user",
+			userID: 1,
 			want: want{
 				contentType: "application/json",
 				status:      http.StatusOK,
@@ -194,7 +197,7 @@ func Test_handler_getWithdrawals(t *testing.T) {
 		},
 		{
 			name:   "2. get withdrawals, no content",
-			userId: "admin",
+			userID: 2,
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				status:      http.StatusNoContent,
@@ -209,29 +212,29 @@ func Test_handler_getWithdrawals(t *testing.T) {
 		},
 	}
 
+	users.
+		On("GetWithdrawals", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID int64) ([]*models.Withdrawal, error) {
+			if userID == 1 {
+				return []*models.Withdrawal{
+					{
+						OrderNumber: "123456789",
+						Sum:         100,
+						ProcessedAt: time.Now(),
+					},
+				}, nil
+			} else if userID == 2 {
+				return []*models.Withdrawal{}, nil
+			}
+
+			return nil, errors.New("internal server error")
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("GetWithdrawals", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId string) ([]*models.Withdrawal, error) {
-					if userId == "user" {
-						return []*models.Withdrawal{
-							{
-								OrderNumber: "123456789",
-								Sum:         100,
-								ProcessedAt: time.Now(),
-							},
-						}, nil
-					} else if userId == "admin" {
-						return []*models.Withdrawal{}, nil
-					}
-
-					return nil, errors.New("internal server error")
-				})
-
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			h.getWithdrawals(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.getWithdrawals(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			users.AssertExpectations(t)
 
@@ -305,29 +308,29 @@ func Test_handler_uploadOrder(t *testing.T) {
 		},
 	}
 
+	orders.
+		On("CreateNewOrder", mock.Anything, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, userID int64, orderNum string) error {
+			if orderNum == "1234567" {
+				return services.ErrOrderAlreadyExists
+			} else if orderNum == "12345678" {
+				return services.ErrOrderAlreadyExistsForUser
+			} else if orderNum == "123456789" {
+				return errors.New("internal server error")
+			} else if orderNum == "12345hfjfh" {
+				return services.ErrInvalidOrderNumber
+			} else if orderNum == "1" {
+				return services.ErrInvalidOrderNumberFormat
+			}
+
+			return nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orders.
-				On("CreateNewOrder", mock.Anything, mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, userId, orderNum string) error {
-					if orderNum == "1234567" {
-						return services.ErrOrderAlreadyExists
-					} else if orderNum == "12345678" {
-						return services.ErrOrderAlreadyExistsForUser
-					} else if orderNum == "123456789" {
-						return errors.New("internal server error")
-					} else if orderNum == "12345hfjfh" {
-						return services.ErrInvalidOrderNumber
-					} else if orderNum == "1" {
-						return services.ErrInvalidOrderNumberFormat
-					}
-
-					return nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
-			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), "userId", "user")))
+			h.uploadOrder(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, int64(1))))
 
 			orders.AssertExpectations(t)
 
@@ -386,28 +389,28 @@ func Test_handler_userLogIn(t *testing.T) {
 		},
 	}
 
+	users.
+		On("LoginUser", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, user *models.User) error {
+			if user.Password == "test" {
+				return errors.New("unauthorized")
+			}
+
+			return nil
+		})
+
+	users.
+		On("GetToken", mock.Anything).
+		Return(func(user *models.User) (string, error) {
+			if user.Login == "admin" {
+				return "", errors.New("internal server error")
+			}
+
+			return "token", nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("LoginUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, user *models.User) error {
-					if user.Password == "test" {
-						return errors.New("unauthorized")
-					}
-
-					return nil
-				})
-
-			users.
-				On("GetToken", mock.Anything).
-				Return(func(user *models.User) (string, error) {
-					if user.Login == "admin" {
-						return "", errors.New("internal server error")
-					}
-
-					return "token", nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
 			h.userLogIn(resp, req)
@@ -476,29 +479,29 @@ func Test_handler_userSignUp(t *testing.T) {
 		},
 	}
 
+	users.
+		On("RegisterUser", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, user *models.User) error {
+			if user.Login == "user" {
+				return &pgconn.PgError{Code: pgerrcode.UniqueViolation}
+			} else if user.Login == "admin" {
+				return errors.New("internal server error")
+			}
+			return nil
+		})
+
+	users.
+		On("GetToken", mock.Anything).
+		Return(func(user *models.User) (string, error) {
+			if user.Login == "login" {
+				return "", errors.New("internal server error")
+			}
+
+			return "token", nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("RegisterUser", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, user *models.User) error {
-					if user.Login == "user" {
-						return services.ErrUserAlreadyExists
-					} else if user.Login == "admin" {
-						return errors.New("internal server error")
-					}
-					return nil
-				})
-
-			users.
-				On("GetToken", mock.Anything).
-				Return(func(user *models.User) (string, error) {
-					if user.Login == "login" {
-						return "", errors.New("internal server error")
-					}
-
-					return "token", nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
 			h.userSignUp(resp, req)
@@ -527,13 +530,13 @@ func Test_handler_withdraw(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		userId string
+		userID int64
 		body   string
 		want   want
 	}{
 		{
 			name:   "1. withdraw success",
-			userId: "user",
+			userID: 1,
 			body:   `{"order":"123456789","sum":100}`,
 			want: want{
 				status: http.StatusOK,
@@ -541,7 +544,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "2. withdraw fail, insufficient funds",
-			userId: "user",
+			userID: 2,
 			body:   `{"order":"123456789","sum":1000}`,
 			want: want{
 				status: http.StatusPaymentRequired,
@@ -549,7 +552,7 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "3. withdraw fail, invalid order number",
-			userId: "user",
+			userID: 2,
 			body:   `{"order":"12345678dfg","sum":100}`,
 			want: want{
 				status: http.StatusBadRequest,
@@ -557,49 +560,50 @@ func Test_handler_withdraw(t *testing.T) {
 		},
 		{
 			name:   "4. withdraw fail, invalid order number format",
-			userId: "user",
+			userID: 2,
 			body:   `{"order":"1","sum":100}`,
 			want: want{
 				status: http.StatusUnprocessableEntity,
 			},
 		},
 		{
-			name: "5. withdraw fail, internal server error",
-			body: `{"order":"123456789","sum":100}`,
+			name:   "5. withdraw fail, internal server error",
+			userID: 0,
+			body:   `{"order":"123456789","sum":100}`,
 			want: want{
 				status: http.StatusInternalServerError,
 			},
 		},
 		{
 			name:   "6. withdraw fail, bad request",
-			userId: "user",
+			userID: 2,
 			want: want{
 				status: http.StatusBadRequest,
 			},
 		},
 	}
 
+	users.
+		On("WithdrawFromAccount", mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, withdrawal *models.Withdrawal) error {
+			if withdrawal.Sum == 1000 {
+				return services.ErrInsufficientFunds
+			} else if withdrawal.OrderNumber == "12345678dfg" {
+				return services.ErrInvalidOrderNumber
+			} else if withdrawal.OrderNumber == "1" {
+				return services.ErrInvalidOrderNumberFormat
+			} else if withdrawal.UserID == 0 {
+				return errors.New("internal server error")
+			}
+
+			return nil
+		})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users.
-				On("WithdrawFromAccount", mock.Anything, mock.Anything).
-				Return(func(ctx context.Context, withdrawal *models.Withdrawal) error {
-					if withdrawal.Sum == 1000 {
-						return services.ErrInsufficientFunds
-					} else if withdrawal.OrderNumber == "12345678dfg" {
-						return services.ErrInvalidOrderNumber
-					} else if withdrawal.OrderNumber == "1" {
-						return services.ErrInvalidOrderNumberFormat
-					} else if withdrawal.UserID == "" {
-						return errors.New("internal server error")
-					}
-
-					return nil
-				})
-
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
 			resp := httptest.NewRecorder()
-			h.withdraw(resp, req.WithContext(context.WithValue(req.Context(), "userId", tt.userId)))
+			h.withdraw(resp, req.WithContext(context.WithValue(req.Context(), middleware.KeyUserID{}, tt.userID)))
 
 			users.AssertExpectations(t)
 

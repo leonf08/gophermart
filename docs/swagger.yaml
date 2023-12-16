@@ -64,7 +64,7 @@ info:
     title: Gophermart API
     version: 1.0.0
 paths:
-    /balance/:
+    /balance:
         get:
             operationId: getUserBalance
             responses:
@@ -79,7 +79,7 @@ paths:
             summary: Get user balance.
             tags:
                 - balance
-    /balance/withdraw/:
+    /balance/withdraw:
         post:
             consumes:
                 - application/json
@@ -115,7 +115,7 @@ paths:
             summary: Withdraw money from the user balance.
             tags:
                 - balance
-    /login/:
+    /login:
         post:
             consumes:
                 - application/json
@@ -137,7 +137,7 @@ paths:
             summary: Log in a user.
             tags:
                 - auth
-    /orders/:
+    /orders:
         get:
             operationId: getOrders
             responses:
@@ -183,7 +183,7 @@ paths:
             summary: Upload an order.
             tags:
                 - orders
-    /register/:
+    /register:
         post:
             consumes:
                 - application/json
@@ -205,7 +205,7 @@ paths:
             summary: Register a new user.
             tags:
                 - auth
-    /withdrawals/:
+    /withdrawals:
         get:
             operationId: getWithdrawals
             responses:

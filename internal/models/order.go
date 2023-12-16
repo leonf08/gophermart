@@ -12,18 +12,18 @@ const (
 
 type (
 	Order struct {
-		UserID     string    `json:"-" db:"user_id"`
+		UserID     int64     `json:"-" db:"user_id"`
 		Number     string    `json:"number" db:"number"`
 		Status     string    `json:"status" db:"status"`
 		Accrual    float64   `json:"accrual,omitempty" db:"accrual"`
-		UploadedAt time.Time `json:"uploaded_at" db:"uploaded_at"`
+		UploadedAt time.Time `json:"uploaded_at" db:"created_at"`
 	}
 
 	Withdrawal struct {
-		UserID      string    `json:"-" db:"user_id"`
+		UserID      int64     `json:"-" db:"user_id"`
 		OrderNumber string    `json:"order" db:"order_number"`
 		Sum         float64   `json:"sum" db:"sum"`
-		ProcessedAt time.Time `json:"processed_at,omitempty" db:"processed_at"`
+		ProcessedAt time.Time `json:"processed_at,omitempty" db:"updated_at"`
 	}
 
 	AccrualResponse struct {
